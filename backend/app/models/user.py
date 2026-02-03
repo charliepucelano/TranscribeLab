@@ -3,20 +3,31 @@ from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 
-class PyObjectId(ObjectId):
+from typing import Annotated, Any, Union
+from pydantic import BaseModel, EmailStr, Field, GetJsonSchemaHandler
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
+
+class PyObjectId(str):
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    def __get_pydantic_core_schema__(
+        cls, _source_type: Any, _handler: GetJsonSchemaHandler
+    ) -> core_schema.CoreSchema:
+        return core_schema.union_schema(
+            [
+                core_schema.str_schema(),
+                core_schema.is_instance_schema(ObjectId),
+            ],
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda x: str(x)
+            ),
+        )
 
     @classmethod
-    def validate(cls, v, values=None, config=None): # Added extras for pydantic v2 compat attempt
+    def validate(cls, v):
         if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
+            raise ValueError("Invalid ObjectId")
         return ObjectId(v)
-
-    @classmethod
-    def __get_pydantic_json_schema__(cls, core_schema, handler):
-        return {"type": "string"}
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -32,7 +43,7 @@ class UserInDB(UserBase):
     is_active: bool = True
     
 class User(UserBase):
-    id: str = Field(alias="_id")
+    id: PyObjectId = Field(alias="_id")
     is_active: bool
 
     class Config:
