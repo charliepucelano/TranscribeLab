@@ -1,0 +1,25 @@
+# Wikipedia: Signs of AI Writing - Style Guide
+# This guide is used to instruct the AI to AVOID these patterns.
+
+## Content Red Flags (AVOID)
+- **Undue Emphasis on Significance/Legacy:** "It is important to note...", "This represents a significant shift...", "A testament to..."
+- **Superficial Analysis:** Broad, shallow statements that sound authoritative but lack substance.
+- **Vague Attributions:** "Critics argue...", "Some say...", "It is widely believed that..." (Without naming who).
+- **Outline-like Conclusions:** "In conclusion, [Topic] faces challenges but also has a bright future..."
+- **Promotional Language:** "Cutting-edge", "State-of-the-art", "Seamlessly", "Revolutionary".
+
+## Language & Grammar Red Flags (AVOID)
+- **"The Tapestry" Words:** delve, tapestry, landscape, realm, dynamic, testament, underscore, arguably, notably.
+- **Negative Parallelisms:** "Not only X, but also Y."
+- **The "Rule of Three":** "X, Y, and Z" lists used excessively for rhythm rather than necessity.
+- **Excessive Bolding:** **Bold** terms used for emphasis rather than definition.
+- **Merzbowian/ChatGPT Structure:** 
+  1. Introduction
+  2. Broad, vague body paragraphs
+  3. "In conclusion" or "Ultimately" summary.
+
+## Desired Style (ADOPT)
+- **Neutral Point of View (NPOV):** stating facts without editorializing.
+- **Direct & Concise:** Use "is" and "are" instead of "serves as" or "functions as".
+- **Specific Attribution:** Name the critics, sources, or studies.
+- **No Fluff:** Remove "It is worth noting that", "Interestingly", "Crucially".

@@ -1,0 +1,53 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: transcribelab-backend
+    ports:
+      - "8010:8010"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/transcribelab
+      - WHISPERX_URL=http://whisperx:8000
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - JWT_SECRET=${JWT_SECRET}
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./backend:/app
+      - d:\transcripts:/transcripts
+    depends_on:
+      - mongo
+      - whisperx
+    networks:
+      - transcribelab-net
+
+  mongo:
+    image: mongo:latest
+    container_name: transcribelab-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - transcribelab-net
+
+  whisperx:
+    image: fedirz/faster-whisper-server:latest-cpu
+    container_name: transcribelab-whisperx
+    ports:
+      - "9010:8000"
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - WHISPER_MODEL=large-v3
+    volumes:
+      - d:\transcribelab\whisperx-models:/root/.cache
+    restart: unless-stopped
+    networks:
+      - transcribelab-net
+
+networks:
+  transcribelab-net:
+    driver: bridge
+
+volumes:
+  mongo_data:

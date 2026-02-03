@@ -1,0 +1,25 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Node.js
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Project Specific
+transcripts/
+*.log
+.DS_Store
+whisperx-models/
+mongo_data/
+
+# IDEs
+.vscode/
+.idea/
