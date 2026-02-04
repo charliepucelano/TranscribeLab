@@ -14,6 +14,7 @@ export default function RegisterPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -33,26 +34,16 @@ export default function RegisterPage() {
 
         try {
             // Register
-            await api.post('/auth/register', {
+            const response = await api.post('/auth/register', {
                 email,
                 password
             });
 
-            // Auto-login after register
-            // We need to hit /token endpoint
-            const formData = new FormData();
-            formData.append('username', email);
-            formData.append('password', password);
-
-            const loginResponse = await api.post('/auth/token', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-
-            const { access_token } = loginResponse.data;
-            if (access_token) {
-                localStorage.setItem('token', access_token);
-                router.push('/dashboard');
+            // Show recovery key
+            if (response.data && response.data.recovery_key) {
+                setRecoveryKey(response.data.recovery_key);
             } else {
+                // Fallback if no key returned (shouldn't happen with new backend)
                 router.push('/auth/login');
             }
 
@@ -63,6 +54,34 @@ export default function RegisterPage() {
             setLoading(false);
         }
     };
+
+    const handleLoginRedirect = () => {
+        router.push('/auth/login');
+    }
+
+    if (recoveryKey) {
+        return (
+            <div className={styles.container}>
+                <div className={styles.card} style={{ maxWidth: '600px' }}>
+                    <h1 className={styles.title} style={{ color: '#22c55e' }}>Registration Successful!</h1>
+                    <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4 my-6 text-left">
+                        <h3 className="text-red-400 font-bold mb-2">⚠️ IMPORTANT: SAVE THIS RECOVERY KEY</h3>
+                        <p className="text-sm text-gray-300 mb-4">
+                            This is the <strong>ONLY</strong> way to recover your account if you forget your password.
+                            We cannot reset your password for you because your data is encrypted.
+                        </p>
+                        <div className="bg-black/50 p-3 rounded font-mono text-center text-lg tracking-wider break-all text-yellow-500 select-all border border-white/10">
+                            {recoveryKey}
+                        </div>
+                    </div>
+
+                    <Button onClick={handleLoginRedirect} fullWidth variant="secondary">
+                        I have saved my Recovery Key. Proceed to Login.
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container}>

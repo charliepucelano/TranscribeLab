@@ -1,0 +1,26 @@
+.container {
+    padding: 2rem;
+    color: var(--foreground);
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    background: linear-gradient(to right, #fff, #ccc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.description {
+    color: #888;
+    margin-bottom: 2rem;
+}
+
+.placeholder {
+    padding: 2rem;
+    border: 1px dashed #444;
+    border-radius: 8px;
+    text-align: center;
+    color: #666;
+}

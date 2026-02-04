@@ -1,7 +1,6 @@
 .sidebar {
     width: 280px;
-    background-color: rgba(15, 23, 42, 0.6);
-    /* Semi-transparent dark blue/slate */
+    background-color: rgba(15, 23, 42, 0.8);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -12,6 +11,7 @@
     left: 0;
     top: 0;
     z-index: 50;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .header {
@@ -60,13 +60,58 @@
 
 .active {
     background-color: rgba(59, 130, 246, 0.15);
-    /* Primary color low opacity */
     color: #60a5fa;
-    /* Primary lighten */
     border-color: rgba(59, 130, 246, 0.2);
 }
 
 .footer {
     padding: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Toggle Button */
+.toggleButton {
+    display: none;
+    /* Hidden on desktop */
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 60;
+    padding: 0.5rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 40;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        /* Hidden by default */
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .toggleButton {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .overlay.visible {
+        display: block;
+    }
 }

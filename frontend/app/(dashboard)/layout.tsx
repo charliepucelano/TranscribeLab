@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
+import styles from './layout.module.css';
 
 export default function DashboardLayout({
     children,
@@ -7,15 +8,9 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div style={{ display: 'flex' }}>
+        <div className={styles.container}>
             <Sidebar />
-            <main style={{
-                flex: 1,
-                marginLeft: '280px',
-                minHeight: '100vh',
-                backgroundColor: 'hsl(var(--background))',
-                padding: '2rem'
-            }}>
+            <main className={styles.main}>
                 {children}
             </main>
         </div>

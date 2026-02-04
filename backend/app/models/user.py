@@ -38,6 +38,8 @@ class UserCreate(UserBase):
 class UserInDB(UserBase):
     hashed_password: str
     encrypted_master_key: str
+
+    master_key_hash: str
     key_derivation_salt: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = True
@@ -50,3 +52,6 @@ class User(UserBase):
         populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
+class UserRegistered(User):
+    recovery_key: str

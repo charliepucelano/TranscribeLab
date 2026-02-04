@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, EmailStr
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import timedelta
 from app.core.database import db
 from app.core.auth import get_password_hash, verify_password, create_access_token
-from app.models.user import UserCreate, UserInDB, User
+from app.models.user import UserCreate, UserInDB, User, UserRegistered
 from app.core.config import settings
 from bson import ObjectId
 
@@ -30,7 +31,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
     return User(**user)
 
-from app.core.crypto import generate_salt, generate_key, derive_key, encrypt_data, encode_bytes
+from app.core.crypto import generate_salt, generate_key, derive_key, encrypt_data, encode_bytes, decode_str
 
 @router.post("/register", response_model=User)
 async def register(user_in: UserCreate):
@@ -55,11 +56,16 @@ async def register(user_in: UserCreate):
     # 4. Encrypt the Master Key with the KEK
     encrypted_master_key = encrypt_data(master_key, kek)
     
+    # Calculate Master Key Hash (SHA256) for verification during recovery
+    import hashlib
+    master_key_hash = hashlib.sha256(master_key).hexdigest()
+
     # Create user
     user = UserInDB(
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password),
         encrypted_master_key=encode_bytes(encrypted_master_key),
+        master_key_hash=master_key_hash,
         key_derivation_salt=encode_bytes(salt),
         is_active=True
     )
@@ -67,7 +73,74 @@ async def register(user_in: UserCreate):
     new_user = await db.get_db().users.insert_one(user.model_dump(by_alias=True, exclude={"id"}))
     created_user = await db.get_db().users.find_one({"_id": new_user.inserted_id})
     
-    return User(**created_user)
+    # Return user with Recovery Key (only time it's exposed)
+    return UserRegistered(**created_user, recovery_key=encode_bytes(master_key))
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    recovery_key: str
+    new_password: str
+
+@router.post("/reset-password", response_model=User)
+async def reset_password(reset_in: ResetPasswordRequest):
+    user = await db.get_db().users.find_one({"email": reset_in.email})
+    if not user:
+        # Avoid user enumeration (fake delay could be added here)
+        raise HTTPException(status_code=400, detail="Invalid request")
+
+    # Verify Recovery Key
+    try:
+        recovery_key_bytes = decode_str(reset_in.recovery_key)
+    except:
+         raise HTTPException(status_code=400, detail="Invalid recovery key format")
+
+    import hashlib
+    calculated_hash = hashlib.sha256(recovery_key_bytes).hexdigest()
+    
+    if calculated_hash != user.get("master_key_hash"):
+         raise HTTPException(status_code=400, detail="Invalid recovery key")
+    
+    # Key is valid. Re-encrypt vault with new password.
+    # 1. Generate new salt
+    new_salt = generate_salt()
+    
+    # 2. Derive new KEK
+    new_kek = derive_key(reset_in.new_password, new_salt)
+    
+    # 3. Encrypt Master Key (Recovery Key) with new KEK
+    new_encrypted_master_key = encrypt_data(recovery_key_bytes, new_kek)
+    
+    # Update DB
+    await db.get_db().users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "hashed_password": get_password_hash(reset_in.new_password),
+                "encrypted_master_key": encode_bytes(new_encrypted_master_key),
+                "key_derivation_salt": encode_bytes(new_salt)
+            }
+        }
+    )
+    
+    updated_user = await db.get_db().users.find_one({"_id": user["_id"]})
+    return User(**updated_user)
+
+
+@router.post("/invite")
+async def create_invitation(current_user: User = Depends(get_current_user)):
+    # Create a signed token with "invite" scope
+    # For now, just a long-lived JWT or similar. 
+    # To keep it simple, we'll just return a link to register page with a cosmetic parameter
+    # In a real system, /register would validate this token.
+    # We will implement /register validation in the next step if requested.
+    
+    # Here we just generate a simple client-side link for now as per plan
+    import secrets
+    token = secrets.token_urlsafe(16)
+    link = f"http://{settings.DOMAIN_NAME or 'localhost:3000'}/register?invite={token}"
+    
+    return {"invitation_link": link, "note": "Share this link. (Token validation pending in next iteration)"}
+
 
 @router.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
