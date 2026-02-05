@@ -27,7 +27,7 @@ class PyObjectId(str):
     def validate(cls, v):
         if not ObjectId.is_valid(v):
             raise ValueError("Invalid ObjectId")
-        return ObjectId(v)
+        return str(v)
 
 class UserBase(BaseModel):
     email: EmailStr

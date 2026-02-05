@@ -17,6 +17,9 @@ class Database:
 
     def get_db(self):
         """Get database instance."""
-        return self.client.get_database()
+        if self.client is None:
+            print("WARNING: DB client was None, reconnecting...")
+            self.connect()
+        return self.client.get_default_database()
 
 db = Database()

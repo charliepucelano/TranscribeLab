@@ -34,6 +34,25 @@
     overflow: hidden;
 }
 
+
+.deleteButton {
+    background: none;
+    border: none;
+    color: hsl(var(--muted-foreground));
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    margin-right: 0.5rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.deleteButton:hover {
+    color: hsl(var(--destructive));
+    background-color: hsl(var(--destructive) / 0.1);
+}
+
 .card:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -74,7 +93,7 @@
 }
 
 .status {
-    font-size: 0.7px;
+    font-size: 0.75rem;
     font-weight: 700;
     padding: 0.25rem 0.6rem;
     border-radius: 9999px;
@@ -85,6 +104,11 @@
 .statusCompleted {
     background-color: rgba(16, 185, 129, 0.15);
     color: #34d399;
+}
+
+.statusFailed {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #f87171;
 }
 
 .statusProcessing {

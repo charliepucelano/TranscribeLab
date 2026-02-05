@@ -23,6 +23,9 @@
   - **Interviews**: Highlights Q&A and candidate profile.
   - **Client Calls**: Extracts requirements and next steps.
 - **Outlook Integration**: Drag & drop `.ics` invites to auto-fill meeting details.
+- **HiDock Mode (New)**: Upload existing `.srt` or `.txt` transcripts to skip ASR and jump straight to Alignment + Diarization (3-5x faster).
+- **Smart Speaker Edit**: Rename speakers across the entire transcript instantly with a modal popup.
+- **Real-time Progress**: Live progress bars ("Diarizing... 67%") powered by Server-Sent Events (SSE).
 
 ---
 
@@ -103,8 +106,15 @@ Open your browser to [http://localhost:3002](http://localhost:3002).
 ### Changing the AI Model
 Edit `backend/app/services/summarization.py`:
 ```python
+```python
 async def generate_summary(..., model: str = "qwen2.5:32b") -> str:
 ```
+
+### Advanced Diarization Settings
+In the **Upload Page**, click "Advanced Settings" to tune:
+- **VAD Threshold**: 0.4 (Default). Increase to 0.6+ for noisy environments.
+- **Min Silence**: 250ms (Default).
+- **Speaker Count**: Manually clamp Min/Max speakers to prevent hallucinations.
 
 ### Hardware Acceleration (GPU)
 If you have an NVIDIA GPU, verify `docker-compose.yml` uses the CUDA image:

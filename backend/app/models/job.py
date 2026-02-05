@@ -1,9 +1,8 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
-from datetime import datetime
+from typing import Optional, Dict, Any
 from enum import Enum
+from datetime import datetime
 from bson import ObjectId
-from app.models.user import PyObjectId
 
 class JobStatus(str, Enum):
     PENDING = "pending"
@@ -11,42 +10,45 @@ class JobStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
-class MeetingType(str, Enum):
-    GENERAL = "General Meeting"
-    INTERVIEW = "Interview"
-    STANDUP = "Team Standup"
-    CLIENT = "Client Call"
-    SALES = "Sales Call"
-    BRAINSTORM = "Brainstorming Session"
-    OTHER = "Other"
+class JobConfig(BaseModel):
+    vad_onset: float = 0.4
+    min_silence_duration_ms: int = 250
+    max_initial_silence: float = 0.5
+    min_speakers: Optional[int] = None
+    max_speakers: Optional[int] = None
+    beam_size: int = 5
+    condition_on_previous_text: bool = False
 
 class JobBase(BaseModel):
-    filename: str
-    original_filename: str
-    content_type: str
-    size: int
+    job_name: str
+    meeting_type: str = "General Meeting"
     language: str = "en"
-    num_speakers: Optional[int] = None # 0 or None for auto
-    meeting_type: MeetingType = MeetingType.GENERAL
-    job_name: Optional[str] = None
     
 class JobCreate(JobBase):
-    pass
+    config: Optional[JobConfig] = None
 
 class JobInDB(JobBase):
     user_id: str
-    status: JobStatus = JobStatus.PENDING
-    file_path: str # Path to encrypted audio
+    status: Optional[JobStatus] = JobStatus.PENDING
+    status_message: Optional[str] = None # Granular progress: "Transcribing", "Aligning", etc.
+    progress: Optional[int] = 0 # 0-100 percentage coverage
+    file_path: Optional[str] = None # Path to encrypted audio
+    file_key: Optional[str] = None # Encrypted/Encoded file key
+    transcript_path: Optional[str] = None # Path to encrypted transcript
+    transcript_text: Optional[str] = None # Stored transcript for alignment (DEPRECATED: Use transcript_file_path if it's a file)
+    transcript_file_path: Optional[str] = None # Path to uploaded transcript (HiDock mode)
+    config: JobConfig = Field(default_factory=JobConfig)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
-    speaker_labels: Optional[List[str]] = None
-    duration: Optional[float] = None
     
-class Job(JobInDB):
-    id: str = Field(alias="_id")
-
     class Config:
         populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
+class Job(JobInDB):
+    id: Optional[str] = Field(alias="_id", default=None)
+    
+class TranscriptUpdate(BaseModel):
+    segments: list

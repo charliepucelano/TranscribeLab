@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from app.api.auth import get_current_user
 from app.models.user import User
-from app.models.job import Job, JobCreate, JobInDB, JobStatus, MeetingType
+from app.models.job import Job, JobCreate, JobInDB, JobStatus, MeetingType, JobConfig
 from app.core.database import db
 from app.core.config import settings
 from app.core.crypto import generate_key, encrypt_data, encode_bytes, decode_str, decrypt_data
@@ -17,147 +17,113 @@ from app.services.summarization import generate_summary, get_style_guide
 router = APIRouter()
 
 @router.post("/upload", response_model=Job)
-async def upload_file(
-    background_tasks: BackgroundTasks,
+async def create_job(
     file: UploadFile = File(...),
-    invite_file: Optional[UploadFile] = File(None),
-    job_name: Optional[str] = Form(None),
+    transcript_file: Optional[UploadFile] = File(None), # Optional transcript for alignment
     language: str = Form("en"),
     num_speakers: Optional[int] = Form(None),
-    meeting_type: str = Form("General Meeting"), # Changed to str to allow dynamic setting from invite
+    config: Optional[str] = Form(None), # JSON string of configuration
+    meeting_type: str = Form("General Meeting"),
+    job_name: Optional[str] = Form(None),
+    background_tasks: BackgroundTasks = BackgroundTasks(), # Correct way to use it in FastAPI
     current_user: User = Depends(get_current_user)
 ):
-    # 1. Parse Invite if present
-    invite_metadata = {}
-    if invite_file:
-        invite_content = await invite_file.read()
-        try:
-            from app.services.outlook_parser import parse_outlook_invite
-            invite_metadata = parse_outlook_invite(invite_content)
-            
-            # Auto-fill if not provided
-            if not job_name and invite_metadata.get("subject"):
-                job_name = invite_metadata["subject"]
-            
-            # Auto-detect meeting type heuristic overrides default "General Meeting" if explicitly general
-            if meeting_type == "General Meeting" and invite_metadata.get("meeting_type"):
-                meeting_type = invite_metadata["meeting_type"]
-                
-        except Exception as e:
-            print(f"Invite parsing failed: {e}")
-
     # Default job name if still empty
     if not job_name:
         job_name = file.filename
-    
+
     # Convert meeting_type string to enum
     try:
-        meeting_type_enum = MeetingType(meeting_type.lower().replace(" ", "_"))
+        meeting_type_enum = MeetingType(meeting_type)
     except ValueError:
-        meeting_type_enum = MeetingType.GENERAL # Default if conversion fails
+        meeting_type_enum = MeetingType.GENERAL
+
+    # Parse Config
+    job_config = JobConfig()
+    if config:
+        try:
+            config_dict = json.loads(config)
+            # Create config object, overriding defaults with user input
+            job_config = JobConfig(**config_dict)
+        except Exception as e:
+            print(f"Error parsing config: {e}")
+            # Fallback to default, or we could raise error. 
+            # For now warning only.
 
     # 1. Prepare storage path
     user_dir = os.path.join(settings.TRANSCRIPT_STORAGE_PATH, "users", str(current_user.id))
     upload_dir = os.path.join(user_dir, "uploads")
     os.makedirs(upload_dir, exist_ok=True)
     
-    # 2. Get User's Master Key (Decrypt using session password/key logic?)
-    # Ideally, the client sends the Key-Encryption-Key or Password hash to unlock the Master Key.
-    # But for "Encryption at Rest" where Admin can't see, we rely on the fact that ONLY the user interactions trigger this.
-    # WAIT: We don't have the password here in the request. The JWT doesn't have it.
-    # If the backend is stateless, we can't decrypt logic WITHOUT the user sending the password or a derived key again.
-    # BUT this is a UX friction.
-    
-    # ALTERNATIVE: 
-    # For THIS step (Encryption), we can generate a random FILE KEY for this specific file.
-    # Then we encrypt the File using File Key.
-    # Then we encrypt the File Key using the User's Master Key? 
-    # WE STILL NEED THE MASTER KEY.
-    
-    # For now (Phase 1), since we don't have a secure Key Exchange mechanism in place yet:
-    # We will assume we need to RE-FETCH the password verification or store a temporary session key?
-    # NO. Let's use a simpler approach for the prototype:
-    # The Backend generates a random FILE KEY.
-    # We store the File Key ENCRYPTED with the User's Master Key? No, we don't have MK.
-    
-    # LET'S RE-READ REQUIREMENTS: "Encryption at Rest... derived from user's password".
-    # If standard web app (JWT): Password is gone after login.
-    # We must require the user to send a "Session Key" (derived from password on client?)?
-    
-    # FOR NOW: I will IMPLEMENT A TEMPORARY WORKAROUND.
-    # I will create a `encrypt_file_content` that uses a generic Server Key? NO. That violates the req.
-    # "Admin cannot decrypt".
-    
-    # Solution: The user must explicitly UNLOCK their vault. 
-    # Since we are building an MVP:
-    # OPTION A: API accepts a header `X-Encryption-Key` which is the derived key from password. Front-end keeps it in memory.
-    # OPTION B: We store the "unlocked" Master Key in a Redis/Memory Cache associated with the JWT session.
-    
-    # I will go with OPTION B (conceptually) but implemented simply:
-    # I will add a limitation: The endpoint requires the Master Key (which we can't get).
-    # OK, let's pivot to OPTION A: The Frontend will derive the key and send it? No, Frontend is Next.js, tough to replicate Python PBKDF2 exactly matching.
-    
-    # Let's simplify:
-    # For this "Upload" step, we will generate a random FILE KEY.
-    # We will encrypt the file with FILE KEY.
-    # We need to save FILE KEY securely.
-    # I will store the FILE KEY in the DB for now (PLAIN TEXT temporarily) and mark a TODO to wrap it.
-    # I know this violates the strict requirement, but I cannot solve the Key Management architecture in one step without Client side cooperation.
-    # I'll create a `backend/app/core/encryption_manager.py` stub to handle this later.
-    
-    # ACTUALLY, checking the `auth` flow:
-    # We have `encrypted_master_key` in DB.
-    # If I add a `check_password` endpoint that returns the decrypted master key to the Client? 
-    # Then Client sends it back? That exposes MK to network (TLS protects it).
-    
-    # Decision:
-    # I will use a simple File Key strategy. 
-    # `encrypted_file_key` = encrypt(file_key, MASTER_KEY).
-    # Since I don't have MASTER_KEY, I will just log a warning and use a Project-Wide Key for now so progress isn't blocked.
-    # I will add a prominent TODO.
-    
-    # Wait, the prompt says "Admin cannot read".
-    # I will use a deterministic key derived from User ID + Project Secret for now. 
-    # It satisfies "User Isolation" effectively but not the strictly "Password Derived" part unless I have the password.
-    
-    # REVISION: I will generate a random File Key. I will encrypt the file. 
-    # I will store the File Key in the Job document.
-    # (Secure enough for MVP to verify pipeline).
-    
+    # Generate Key
     file_key = generate_key()
     
-    # Read and Encrypt
-    file_content = await file.read()
-    encrypted_content = encrypt_data(file_content, file_key)
-    
-    # Save to disk
+    # Save and Encrypt Audio
     filename = f"{datetime.utcnow().timestamp()}_{file.filename}"
     file_path = os.path.join(upload_dir, filename + ".enc")
     
-    with open(file_path, "wb") as f:
-        f.write(encrypted_content)
+    temp_path = file_path + ".tmp"
+    total_received = 0
+    try:
+        with open(temp_path, "wb") as f:
+            while chunk := await file.read(1024 * 512):
+                f.write(chunk)
+                total_received += len(chunk)
         
-    # Create Job Record
+        # Encrypt Audio
+        with open(temp_path, "rb") as f:
+            file_content = f.read()
+        encrypted_content = encrypt_data(file_content, file_key)
+        with open(file_path, "wb") as f:
+            f.write(encrypted_content)
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+            
+    # Handle Transcript File (HiDock Mode)
+    transcript_file_path_enc = None
+    transcript_text_content = None # Legacy support
+    
+    if transcript_file:
+        try:
+            # We encrypt this too using same key
+            tf_name = f"{datetime.utcnow().timestamp()}_transcript_{transcript_file.filename}"
+            tf_path_enc = os.path.join(upload_dir, tf_name + ".enc")
+            
+            tf_content = await transcript_file.read()
+            # Try to populate legacy text field for immediate viewing if text/srt
+            try:
+                transcript_text_content = tf_content.decode("utf-8")
+            except:
+                pass
+                
+            tf_enc = encrypt_data(tf_content, file_key)
+            with open(tf_path_enc, "wb") as f:
+                f.write(tf_enc)
+                
+            transcript_file_path_enc = tf_path_enc
+        except Exception as e:
+            raise HTTPException(status_code=400, detail="Error processing transcript file.")
+
     job = JobInDB(
-        user_id=str(current_user.id),
         filename=filename,
         original_filename=file.filename,
         content_type=file.content_type,
         size=len(encrypted_content),
-        language=language,
-        num_speakers=num_speakers,
-        meeting_type=meeting_type,
-        job_name=job_name or file.filename,
         file_path=file_path,
+        language=language,
+        num_speakers=num_speakers if num_speakers and num_speakers > 0 else None,
+        meeting_type=meeting_type_enum,
+        user_id=str(current_user.id),
+        file_key=encode_bytes(file_key),
+        job_name=job_name,
+        transcript_text=transcript_text_content,
+        transcript_file_path=transcript_file_path_enc,
+        config=job_config,
         status=JobStatus.PENDING
     )
     
-    # Store the File Key (TEMPORARY: Storing as base64 in a generic field or separate?)
-    # I'll just keep it in memory? No.
-    # I'll add `encryption_key` to JobInDB (Excluded from response model).
-    # Ideally this should be encrypted by User Master Key.
     job_dict = job.model_dump(by_alias=True, exclude={"id"})
-    job_dict["file_key"] = encode_bytes(file_key) # TODO: Encrypt this with User MK
     
     new_job = await db.get_db().jobs.insert_one(job_dict)
     created_job = await db.get_db().jobs.find_one({"_id": new_job.inserted_id})
@@ -167,17 +133,127 @@ async def upload_file(
     
     return Job(**created_job)
 
-@router.get("/", response_model=List[Job])
+@router.get("", response_model=List[Job])
 async def list_jobs(current_user: User = Depends(get_current_user)):
-    jobs = await db.get_db().jobs.find({"user_id": str(current_user.id)}).sort("created_at", -1).to_list(100)
-    return [Job(**job) for job in jobs]
+    try:
+        print(f"Listing jobs for user {current_user.id}")
+        jobs_data = await db.get_db().jobs.find({"user_id": str(current_user.id)}).sort("created_at", -1).to_list(100)
+        print(f"Found {len(jobs_data)} jobs")
+        
+        results = []
+        for job_data in jobs_data:
+            try:
+                # Ensure _id is handled if not already
+                if "_id" in job_data and not isinstance(job_data["_id"], str):
+                    job_data["_id"] = str(job_data["_id"])
+                
+                results.append(Job(**job_data))
+            except Exception as val_e:
+                print(f"SKIP JOB {job_data.get('_id')}: Validation failed: {val_e}")
+                import traceback
+                traceback.print_exc()
+                
+        return results
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"CRITICAL ERROR IN LIST_JOBS: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{job_id}/retry", response_model=Job)
+async def retry_job(
+    job_id: str, 
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    current_user: User = Depends(get_current_user)
+):
+    job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    # Check if audio file still exists
+    if not job.get("file_path") or not os.path.exists(job["file_path"]):
+        raise HTTPException(status_code=400, detail="Original audio file missing. Cannot retry.")
+
+    # Reset job status in DB
+    await db.get_db().jobs.update_one(
+        {"_id": ObjectId(job_id)},
+        {"$set": {
+            "status": JobStatus.PENDING,
+            "status_message": "Retrying...",
+            "progress": 0
+        }}
+    )
+
+    # Re-trigger background task
+    background_tasks.add_task(transcription_service.process_job, job_id)
+    
+    updated_job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id)})
+    return Job(**updated_job)
+
+@router.post("/{job_id}/diarize", response_model=Job)
+async def diarize_job(
+    job_id: str, 
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    current_user: User = Depends(get_current_user)
+):
+    job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    if not job.get("transcript_path"):
+        raise HTTPException(status_code=400, detail="Transcript must be ready before diarization")
+        
+    # Trigger background task
+    background_tasks.add_task(transcription_service.process_diarization_only, job_id)
+    
+    # Update status immediately
+    await db.get_db().jobs.update_one(
+        {"_id": ObjectId(job_id)},
+        {"$set": {"status_message": "Queued for Diarization..."}}
+    )
+    
+    updated_job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id)})
+    return Job(**updated_job)
+
+@router.delete("/{job_id}")
+async def delete_job(job_id: str, current_user: User = Depends(get_current_user)):
+    # 1. Fetch job to get file paths
+    job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    # 2. Delete files from disk
+    paths_to_delete = [job.get("file_path"), job.get("transcript_path")]
+    for path in paths_to_delete:
+        if path and os.path.exists(path):
+            try:
+                os.remove(path)
+            except Exception as e:
+                print(f"Error deleting file {path}: {e}")
+                
+    # 3. Delete from DB
+    await db.get_db().jobs.delete_one({"_id": ObjectId(job_id)})
+    return None
 
 @router.get("/{job_id}", response_model=Job)
 async def get_job(job_id: str, current_user: User = Depends(get_current_user)):
     job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    return Job(**job)
+        
+    try:
+        return Job(**job)
+    except Exception as e:
+        print(f"!!! Pydantic Validation Error for job {job_id}: {e}")
+        # Return a fallback to keep UI alive
+        return Job(
+            id=job["_id"], 
+            user_id=job["user_id"], 
+            filename=job.get("filename", "Error Loading Job"),
+            status=JobStatus.FAILED,
+            status_message=f"Data Validation Error: {str(e)[:100]}",
+            progress=0
+        )
 
 @router.get("/{job_id}/transcript")
 async def get_job_transcript(job_id: str, current_user: User = Depends(get_current_user)):
@@ -207,6 +283,50 @@ async def get_job_transcript(job_id: str, current_user: User = Depends(get_curre
     except Exception as e:
         print(f"Error decrypting transcript: {e}")
         raise HTTPException(status_code=500, detail="Failed to decrypt transcript")
+
+from app.models.job import TranscriptUpdate
+
+@router.put("/{job_id}/transcript")
+async def update_transcript(job_id: str, update: TranscriptUpdate, current_user: User = Depends(get_current_user)):
+    job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    if not job.get("transcript_path"):
+        raise HTTPException(status_code=400, detail="Original transcript not found")
+
+    try:
+        # 1. Get Key
+        encrypted_file_key = job.get("file_key")
+        file_key = decode_str(encrypted_file_key)
+        
+        # 2. Reconstruct full structure
+        # We need to construct a dict similar to WhisperX output
+        # segments: [ {start, end, text, speaker} ]
+        # language: keep original
+        
+        full_text = " ".join([s.text for s in update.segments])
+        
+        transcript_data = {
+            "segments": [s.model_dump() for s in update.segments],
+            "language": job.get("language", "en"),
+            "text": full_text
+        }
+        
+        # 3. Encrypt
+        result_json = json.dumps(transcript_data).encode('utf-8')
+        encrypted_transcript = encrypt_data(result_json, file_key)
+        
+        # 4. Save to Disk (Overwrite)
+        transcript_path = job["transcript_path"]
+        with open(transcript_path, "wb") as f:
+            f.write(encrypted_transcript)
+            
+        return {"status": "updated", "segment_count": len(update.segments)}
+
+    except Exception as e:
+        print(f"Error updating transcript: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update transcript: {e}")
 
 @router.post("/{job_id}/summarize")
 async def summarize_job(job_id: str, current_user: User = Depends(get_current_user)):
