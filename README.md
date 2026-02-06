@@ -19,6 +19,7 @@
 ### ⚡ Productivity Tools
 - **Multi-language Support**: Full support for **English** and **Spanish** (auto-detects and formats output accordingly).
 - **Context-Aware Templates**:
+  - **Custom Templates**: Create and manage your own reuseable templates for specific meeting types.
   - **Standups**: Focuses on blockers and updates.
   - **Interviews**: Highlights Q&A and candidate profile.
   - **Client Calls**: Extracts requirements and next steps.

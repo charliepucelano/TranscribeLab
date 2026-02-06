@@ -3,33 +3,14 @@ from pydantic import BaseModel, EmailStr
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import timedelta
 from app.core.database import db
-from app.core.auth import get_password_hash, verify_password, create_access_token
+from app.core.security import verify_password, get_password_hash, create_access_token
+from app.api.dependencies import get_current_user, oauth2_scheme
 from app.models.user import UserCreate, UserInDB, User, UserRegistered
 from app.core.config import settings
 from bson import ObjectId
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        from jose import jwt, JWTError
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-        
-    user = await db.get_db().users.find_one({"email": email})
-    if user is None:
-        raise credentials_exception
-    return User(**user)
 
 from app.core.crypto import generate_salt, generate_key, derive_key, encrypt_data, encode_bytes, decode_str
 

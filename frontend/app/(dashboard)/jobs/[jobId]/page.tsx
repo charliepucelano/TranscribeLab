@@ -18,6 +18,11 @@ interface Segment {
     speaker?: string;
 }
 
+interface Template {
+    name: string;
+    description: string;
+}
+
 export default function EditorPage() {
     const params = useParams();
     const jobId = params.jobId as string;
@@ -27,12 +32,32 @@ export default function EditorPage() {
     const [job, setJob] = useState<any>(null);
     const [summary, setSummary] = useState('');
 
+    // Template State
+    const [templates, setTemplates] = useState<Template[]>([]);
+    const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+
+
     // Smart Edit Modal State
     const [editSpeakerModal, setEditSpeakerModal] = useState<{ isOpen: boolean, speaker: string, segmentId: number } | null>(null);
 
     useEffect(() => {
+        fetchTemplates();
         fetchData();
     }, [jobId]);
+
+    const fetchTemplates = async () => {
+        try {
+            const res = await api.get('/templates');
+            setTemplates(res.data);
+            if (res.data.length > 0) {
+                // Default to "General Meeting" if exists, else first one
+                const general = res.data.find((t: Template) => t.name === "General Meeting");
+                setSelectedTemplate(general ? general.name : res.data[0].name);
+            }
+        } catch (err) {
+            console.error("Failed to load templates", err);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -187,7 +212,7 @@ export default function EditorPage() {
     const generateSummary = async () => {
         setSummary("Generating summary... This may take a moment.");
         try {
-            await api.post(`/jobs/${jobId}/summarize`);
+            await api.post(`/jobs/${jobId}/summarize`, { template_name: selectedTemplate });
             const sumRes = await api.get(`/jobs/${jobId}/summary`);
             setSummary(sumRes.data.summary || "Summary generated but returned empty.");
         } catch (err) {
@@ -360,9 +385,30 @@ export default function EditorPage() {
                 <div className={styles.rightPanel}>
                     <div className={styles.panelHeader}>
                         <span className={styles.panelTitle}>AI Summary</span>
-                        <Button size="small" variant="ghost" onClick={generateSummary} title="Generate Summary">
-                            <Wand2 size={16} />
-                        </Button>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <select
+                                value={selectedTemplate}
+                                onChange={(e) => setSelectedTemplate(e.target.value)}
+                                style={{
+                                    background: 'transparent',
+                                    color: 'hsl(var(--foreground))',
+                                    border: '1px solid hsl(var(--border))',
+                                    borderRadius: '4px',
+                                    padding: '0.2rem 0.5rem',
+                                    fontSize: '0.8rem',
+                                    outline: 'none'
+                                }}
+                            >
+                                {templates.map(t => (
+                                    <option key={t.name} value={t.name} style={{ background: 'hsl(var(--card))' }}>
+                                        {t.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <Button size="small" variant="ghost" onClick={generateSummary} title="Generate Summary">
+                                <Wand2 size={16} />
+                            </Button>
+                        </div>
                     </div>
                     <div className={styles.scrollArea}>
                         <div className={styles.summaryContent}>

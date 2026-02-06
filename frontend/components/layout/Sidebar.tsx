@@ -3,12 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FileAudio, Settings, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, FileAudio, Settings, LogOut, Menu, FileText } from 'lucide-react';
 import styles from './sidebar.module.css';
 
 const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Jobs', href: '/jobs', icon: FileAudio },
+    { label: 'Templates', href: '/templates', icon: FileText },
     { label: 'Settings', href: '/settings', icon: Settings },
 ];
 

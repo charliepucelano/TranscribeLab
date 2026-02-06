@@ -52,6 +52,7 @@ class User(UserBase):
         populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+        extra = "ignore"
 
 class UserRegistered(User):
     recovery_key: str

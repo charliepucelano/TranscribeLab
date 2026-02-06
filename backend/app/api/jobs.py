@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
-from app.api.auth import get_current_user
+from pydantic import BaseModel
+from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.models.job import Job, JobCreate, JobInDB, JobStatus, JobConfig
 from app.core.database import db
@@ -386,8 +387,12 @@ async def update_transcript(job_id: str, update: TranscriptUpdate, current_user:
         print(f"Error updating transcript: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to update transcript: {e}")
 
+class SummarizeRequest(BaseModel):
+    template_name: Optional[str] = None
+
 @router.post("/{job_id}/summarize")
-async def summarize_job(job_id: str, current_user: User = Depends(get_current_user)):
+async def summarize_job(job_id: str, request: Optional[SummarizeRequest] = None, current_user: User = Depends(get_current_user)):
+    template_name = request.template_name if request else None
     job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -420,8 +425,10 @@ async def summarize_job(job_id: str, current_user: User = Depends(get_current_us
         raise HTTPException(status_code=500, detail=f"Failed to decrypt transcript: {e}")
 
     # 2. Generate Summary
-    meeting_type = job.get("meeting_type", "General Meeting")
+    # Prioritize selected template, then job's meeting type, then default
+    meeting_type = template_name if template_name else job.get("meeting_type", "General Meeting")
     language = job.get("language", "en")
+    
     summary = await generate_summary(full_text, meeting_type=meeting_type, language=language)
     
     # 3. Store Summary (Encrypted)

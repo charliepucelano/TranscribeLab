@@ -14,7 +14,20 @@ api.interceptors.request.use(
         if (typeof window !== 'undefined') {
             const token = localStorage.getItem('token');
             if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
+                // Ensure headers object exists
+                if (!config.headers) {
+                    config.headers = {} as any;
+                }
+
+                // Use safe setting method if available (Axios 1.x+) or direct assignment
+                if (config.headers.set) {
+                    config.headers.set('Authorization', `Bearer ${token}`);
+                } else {
+                    config.headers['Authorization'] = `Bearer ${token}`;
+                }
+                // console.log(`[API] Attaching token to ${config.url}`);
+            } else {
+                console.warn("[API] No token in localStorage for request:", config.url);
             }
         }
         return config;
@@ -27,6 +40,7 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
+            console.error("[API] 401 Unauthorized received. Logging out.");
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('token');
                 // Optionally redirect to login
