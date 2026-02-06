@@ -1,20 +1,22 @@
-from motor.motor_asyncio import AsyncIOMotorClient
-import asyncio
+def find_error():
+    file_path = r'd:\dev\Transcribe\backend\debug_logs.txt'
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return
 
-async def get_traceback():
-    client = AsyncIOMotorClient('mongodb://mongo:27017')
-    db = client.transcribelab
-    j = await db.jobs.find_one(sort=[('created_at', -1)])
-    if j:
-        print("=== JOB DETAILS ===")
-        print(f"ID: {j['_id']}")
-        print(f"Original Filename: {j.get('original_filename')}")
-        print(f"Status: {j['status']}")
-        print("--- RAW STATUS MESSAGE ---")
-        print(repr(j.get('status_message')))
-        print("--- END ---")
-    else:
-        print("No jobs found")
+    lines = content.splitlines()
+    found = False
+    for i, line in enumerate(lines):
+        if "DEBUG TRANSCRIPT" in line:
+            print(f"FOUND at line {i+1}:")
+            for j in range(i, min(i+20, len(lines))):
+                 print(f"{j+1}: {lines[j].strip()}")
+            return 
+            
+    if not found:
+        print("Error pattern not found in file.")
 
-if __name__ == "__main__":
-    asyncio.run(get_traceback())
+find_error()

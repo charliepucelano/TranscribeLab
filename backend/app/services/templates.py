@@ -14,15 +14,25 @@ TEMPLATES: Dict[str, Dict[str, MeetingTemplate]] = {
             "General Meeting",
             "Summarize the meeting comprehensively.",
             """
-## Executive Summary
-[Brief overview]
+## 🎯 Executive Summary
+[Concise high-level overview of the meeting's purpose and outcome]
 
-## Key Discussion Points
-- [Point 1]
-- [Point 2]
+## 🔑 Key Decisions
+- [Decision 1]
+- [Decision 2]
 
-## Action Items
-- [User]: [Task]
+## 💡 Key Discussion Points
+- [Topic 1]: [Details]
+- [Topic 2]: [Details]
+
+## ✅ Action Items
+| Owner | Task | Deadline |
+|-------|------|----------|
+| [Name] | [Task Description] | [Date/ASAP] |
+| [Name] | [Task Description] | [Date/ASAP] |
+
+## 🧠 Sentiment & Tone
+[Brief observation of the meeting's tone (e.g., Optimistic, Tense, Productive)]
 """
         ),
         "Interview": MeetingTemplate(
@@ -79,15 +89,25 @@ TEMPLATES: Dict[str, Dict[str, MeetingTemplate]] = {
             "General Meeting",
             "Resume la reunión de manera integral.",
             """
-## Resumen Ejecutivo
-[Breve descripción]
+## 🎯 Resumen Ejecutivo
+[Visión general concisa del propósito y resultado de la reunión]
 
-## Puntos Clave de Discusión
-- [Punto 1]
-- [Punto 2]
+## 🔑 Decisiones Clave
+- [Decisión 1]
+- [Decisión 2]
 
-## Elementos de Acción (Tareas)
-- [Usuario]: [Tarea]
+## 💡 Puntos Clave de Discusión
+- [Tema 1]: [Detalles]
+- [Tema 2]: [Detalles]
+
+## ✅ Elementos de Acción (Tareas)
+| Responsable | Tarea | Fecha Límite |
+|-------------|-------|--------------|
+| [Nombre] | [Descripción] | [Fecha/ASAP] |
+| [Nombre] | [Descripción] | [Fecha/ASAP] |
+
+## 🧠 Sentimiento y Tono
+[Breve observación del tono de la reunión (ej. Optimista, Tenso, Productivo)]
 """
         ),
         "Interview": MeetingTemplate(

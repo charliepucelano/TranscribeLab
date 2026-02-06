@@ -67,7 +67,8 @@ async def generate_summary(transcript_text: str, meeting_type: str = "General Me
     }
 
     try:
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(total=600) # 10 minutes
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(f"{ollama_url}/api/generate", json=payload) as resp:
                 if resp.status != 200:
                     error_text = await resp.text()

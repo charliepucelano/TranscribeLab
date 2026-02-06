@@ -1,0 +1,29 @@
+Status: 200
+Headers: {'content-type': 'text/html; charset=utf-8', 'expires': 'Fri, 06 Feb 2026 00:06:00 GMT', 'cache-control': 'max-age=0, no-cache, no-store, must-revalidate, private', 'x-frame-options': 'SAMEORIGIN', 'vary': 'Cookie, Accept-Language, origin, Accept-Encoding', 'content-length': '3199', 'content-language': 'en-us', 'x-content-type-options': 'nosniff', 'referrer-policy': 'same-origin', 'cross-origin-opener-policy': 'same-origin', 'content-encoding': 'gzip', 'set-cookie': 'csrftoken=LZucOzSG5ioGygy85O0i9Di6i4FQQoHX; expires=Fri, 05 Feb 2027 00:06:00 GMT; Max-Age=31449600; Path=/; SameSite=Lax', 'server': 'granian', 'date': 'Fri, 06 Feb 2026 00:06:00 GMT'}
+Body: <!doctype html>
+
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="author" content="Paperless-ngx project and contributors">
+        <meta name="robots" content="noindex,nofollow">
+
+        <title>
+            
+    Paperless-ngx sign in
+
+        </title>
+        <link href="/static/bootstrap.min.css" rel="stylesheet">
+        <link href="/static/base.css" rel="stylesheet">
+    </head>
+
+    <body class="text-center">
+        <div class="position-absolute top-50 start-50 translate-middle">
+            <form class="form-accounts" id="form-account" method="post">
+                <input type="hidden" name="csrfmiddlewaretoken" value="BRHIhYEYR7k2SNTXztA8Ucl0NXmFMW7PcG1KVnmuMfyygThVu7qgTFtWVRRlsaEC">
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2897.4 896.6" width='300' class='logo mb-4'>
+    <path class="leaf" d="M140,713.7
+JSON Parse Error: Expecting value: line 1 column 1 (char 0)

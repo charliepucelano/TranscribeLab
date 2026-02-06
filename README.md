@@ -24,7 +24,9 @@
   - **Client Calls**: Extracts requirements and next steps.
 - **Outlook Integration**: Drag & drop `.ics` invites to auto-fill meeting details.
 - **HiDock Mode (New)**: Upload existing `.srt` or `.txt` transcripts to skip ASR and jump straight to Alignment + Diarization (3-5x faster).
+- **Rediarize**: One-click re-processing to fix speaker labels if the AI gets them wrong.
 - **Smart Speaker Edit**: Rename speakers across the entire transcript instantly with a modal popup.
+- **Rich Summaries**: Summaries are rendered in beautiful Markdown with tables, lists, and headers.
 - **Real-time Progress**: Live progress bars ("Diarizing... 67%") powered by Server-Sent Events (SSE).
 
 ---

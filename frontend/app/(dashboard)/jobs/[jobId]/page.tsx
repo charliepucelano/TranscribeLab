@@ -7,6 +7,8 @@ import { Button } from '@/components/ui';
 import { Play, Pause, Save, Wand2, Users, Scissors, Edit } from 'lucide-react';
 import { SpeakerEditModal } from '@/components/SpeakerEditModal';
 import styles from './editor.module.css';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Segment {
     id: number;
@@ -40,6 +42,7 @@ export default function EditorPage() {
             // Fetch Transcript
             if (jobRes.data.status === 'completed') {
                 const transRes = await api.get(`/jobs/${jobId}/transcript`);
+
                 // Adapt format: OpenAI verbose_json uses 'segments' array
                 const rawSegments = transRes.data.segments || [];
                 setSegments(rawSegments.map((s: any, idx: number) => ({
@@ -80,7 +83,7 @@ export default function EditorPage() {
             // Since api.ts uses axios baseURL, we need the raw URL.
             // Hardcoding for MVP or extracting from env if possible.
             // Window.location logic is safer if proxying, but we are separate ports.
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const backendUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
             const url = `${backendUrl}/jobs/${jobId}/events?token=${token}`;
 
             eventSource = new EventSource(url);
@@ -265,7 +268,7 @@ export default function EditorPage() {
                         )}
                     </div>
                     <div className={styles.scrollArea}>
-                        {job?.status === 'processing' || job?.status === 'pending' || (job?.status_message && job.status_message.includes('Diariz')) ? (
+                        {(job?.status === 'processing' || job?.status === 'pending' || (job?.status !== 'completed' && job?.status_message && job.status_message.includes('Diariz'))) ? (
                             <div className={styles.loadingState}>
                                 <div className={styles.spinner}></div>
                                 <p>{job?.status_message || "Transcription in progress..."}</p>
@@ -363,7 +366,15 @@ export default function EditorPage() {
                     </div>
                     <div className={styles.scrollArea}>
                         <div className={styles.summaryContent}>
-                            {summary || "Click Generate to create a summary."}
+                            {summary ? (
+                                <div className={styles.markdown}>
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {summary}
+                                    </ReactMarkdown>
+                                </div>
+                            ) : (
+                                "Click Generate to create a summary."
+                            )}
                         </div>
                     </div>
                 </div>

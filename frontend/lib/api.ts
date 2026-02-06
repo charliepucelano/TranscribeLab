@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: '/api', // Relative path to use Next.js rewrites
+    timeout: 600000, // 10 minutes (matching backend)
     headers: {
         'Content-Type': 'application/json',
     },

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from app.api.auth import get_current_user
 from app.models.user import User
-from app.models.job import Job, JobCreate, JobInDB, JobStatus, MeetingType, JobConfig
+from app.models.job import Job, JobCreate, JobInDB, JobStatus, JobConfig
 from app.core.database import db
 from app.core.config import settings
 from app.core.crypto import generate_key, encrypt_data, encode_bytes, decode_str, decrypt_data
@@ -196,24 +196,37 @@ async def diarize_job(
     background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user: User = Depends(get_current_user)
 ):
-    job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+    try:
+        job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+            
+        if not job.get("transcript_path"):
+            raise HTTPException(status_code=400, detail="Transcript must be ready before diarization")
+            
+        # Trigger background task
+        background_tasks.add_task(transcription_service.process_diarization_only, job_id)
         
-    if not job.get("transcript_path"):
-        raise HTTPException(status_code=400, detail="Transcript must be ready before diarization")
+        # Update status immediately
+        await db.get_db().jobs.update_one(
+            {"_id": ObjectId(job_id)},
+            {"$set": {"status_message": "Queued for Diarization..."}}
+        )
         
-    # Trigger background task
-    background_tasks.add_task(transcription_service.process_diarization_only, job_id)
-    
-    # Update status immediately
-    await db.get_db().jobs.update_one(
-        {"_id": ObjectId(job_id)},
-        {"$set": {"status_message": "Queued for Diarization..."}}
-    )
-    
-    updated_job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id)})
-    return Job(**updated_job)
+        updated_job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id)})
+        
+        # Safe conversion for Pydantic
+        if updated_job:
+            updated_job["_id"] = str(updated_job["_id"])
+            
+        return Job(**updated_job)
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"Error in diarize_job: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to queue diarization: {str(e)}")
 
 @router.delete("/{job_id}")
 async def delete_job(job_id: str, current_user: User = Depends(get_current_user)):
@@ -242,18 +255,38 @@ async def get_job(job_id: str, current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Job not found")
         
     try:
+        # Convert _id to string for Pydantic if needed
+        job["_id"] = str(job["_id"])
+        
+        # DEBUG: Print job content to logs to debug validation error
+        # print(f"DEBUG JOB for {job_id}: {job}") 
+        
         return Job(**job)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"!!! Pydantic Validation Error for job {job_id}: {e}")
-        # Return a fallback to keep UI alive
-        return Job(
-            id=job["_id"], 
-            user_id=job["user_id"], 
-            filename=job.get("filename", "Error Loading Job"),
-            status=JobStatus.FAILED,
-            status_message=f"Data Validation Error: {str(e)[:100]}",
-            progress=0
-        )
+        # Print detailed validation errors if it's a Pydantic error
+        if hasattr(e, 'errors'):
+             print(f"Validation Details: {e.errors()}")
+        print(f"Failing Data: {job}")
+        try:
+            # Return a fallback to keep UI alive
+            return Job(
+                id=str(job["_id"]), 
+                user_id=str(job["user_id"]), 
+                job_name=job.get("job_name", "Unknown Job"),
+                meeting_type=job.get("meeting_type", "General"),
+                language=job.get("language", "en"),
+                config=JobConfig(), # Provide default config
+                status=JobStatus.FAILED,
+                status_message=f"Data Validation Error: {str(e)[:100]}",
+                progress=0
+            )
+        except Exception as fallback_e:
+             print(f"FATAL: Fallback creation failed: {fallback_e}")
+             traceback.print_exc()
+             raise HTTPException(status_code=500, detail=f"Critical Data Error: {e}")
 
 @router.get("/{job_id}/transcript")
 async def get_job_transcript(job_id: str, current_user: User = Depends(get_current_user)):
@@ -267,6 +300,9 @@ async def get_job_transcript(job_id: str, current_user: User = Depends(get_curre
     # Decrypt Transcript
     try:
         encrypted_file_key = job.get("file_key")
+        if not encrypted_file_key:
+            raise HTTPException(status_code=500, detail="Encryption key missing for this job. Data may be lost.")
+            
         file_key = decode_str(encrypted_file_key)
         
         transcript_path = job["transcript_path"]
@@ -279,10 +315,21 @@ async def get_job_transcript(job_id: str, current_user: User = Depends(get_curre
         decrypted_json_bytes = decrypt_data(encrypted_content, file_key)
         transcript_data = json.loads(decrypted_json_bytes.decode('utf-8'))
         
+        # DEBUG: Check structure
+        print(f"DEBUG TRANSCRIPT for {job_id}. Keys: {list(transcript_data.keys())}")
+        if "segments" in transcript_data:
+             print(f"Segment count: {len(transcript_data['segments'])}")
+             if len(transcript_data['segments']) > 0:
+                 print(f"Sample segment: {transcript_data['segments'][0]}")
+        else:
+             print("CRITICAL: 'segments' key missing in transcript data!")
+        
         return transcript_data
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Error decrypting transcript: {e}")
-        raise HTTPException(status_code=500, detail="Failed to decrypt transcript")
+        raise HTTPException(status_code=500, detail=f"Failed to decrypt transcript: {type(e).__name__} - {str(e)}")
 
 from app.models.job import TranscriptUpdate
 
@@ -298,17 +345,28 @@ async def update_transcript(job_id: str, update: TranscriptUpdate, current_user:
     try:
         # 1. Get Key
         encrypted_file_key = job.get("file_key")
+        if not encrypted_file_key:
+             raise HTTPException(status_code=500, detail="Encryption key missing.")
         file_key = decode_str(encrypted_file_key)
         
         # 2. Reconstruct full structure
-        # We need to construct a dict similar to WhisperX output
-        # segments: [ {start, end, text, speaker} ]
-        # language: keep original
+        # segments might be dicts or objects depending on Pydantic
+        # Since TranscriptUpdate defines segments as list, they are likely dicts
         
-        full_text = " ".join([s.text for s in update.segments])
+        # full_text = " ".join([s.get("text", "") if isinstance(s, dict) else s.text for s in update.segments])
+        
+        seg_list = []
+        full_text_parts = []
+        
+        for s in update.segments:
+            s_dict = s if isinstance(s, dict) else s.model_dump()
+            seg_list.append(s_dict)
+            full_text_parts.append(s_dict.get("text", ""))
+            
+        full_text = " ".join(full_text_parts)
         
         transcript_data = {
-            "segments": [s.model_dump() for s in update.segments],
+            "segments": seg_list,
             "language": job.get("language", "en"),
             "text": full_text
         }
@@ -350,10 +408,13 @@ async def summarize_job(job_id: str, current_user: User = Depends(get_current_us
         transcript_data = json.loads(decrypted_json_bytes.decode('utf-8'))
         
         # Combine segments into full text
-        full_text = transcript_data.get("text", "")
-        if not full_text: 
-            # If text field missing, reconstruction from segments
-            full_text = " ".join([s["text"] for s in transcript_data.get("segments", [])])
+        # Combine segments into full text WITH Speaker attribution
+        # We ignore top-level 'text' because it lacks speaker labels
+        segments = transcript_data.get("segments", [])
+        if segments:
+            full_text = "\n".join([f"{s.get('speaker', 'Unknown')}: {s.get('text', '')}" for s in segments])
+        else:
+             full_text = transcript_data.get("text", "")
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to decrypt transcript: {e}")

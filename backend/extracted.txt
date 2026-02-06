@@ -1,0 +1,226 @@
+FOUND at line 147:
+147: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+148: Segment count: 140
+149: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+150: INFO:     172.24.0.1:52438 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+151: INFO:     172.24.0.1:52440 - "GET /jobs/6983c61354698ebd5320af00/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc HTTP/1.1" 200 OK
+152: INFO:     172.24.0.1:52452 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+153: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+154: Segment count: 140
+155: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+156: INFO:     172.24.0.1:52462 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+157: INFO:     172.24.0.1:52468 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+158: INFO:     172.24.0.1:52470 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+159: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+160: Segment count: 140
+161: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+162: INFO:     172.24.0.1:52478 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+163: INFO:     172.24.0.1:52480 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+164: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+165: Segment count: 140
+166: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+FOUND at line 153:
+153: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+154: Segment count: 140
+155: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+156: INFO:     172.24.0.1:52462 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+157: INFO:     172.24.0.1:52468 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+158: INFO:     172.24.0.1:52470 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+159: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+160: Segment count: 140
+161: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+162: INFO:     172.24.0.1:52478 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+163: INFO:     172.24.0.1:52480 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+164: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+165: Segment count: 140
+166: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+167: INFO:     172.24.0.1:52482 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+168: INFO:     172.24.0.1:52492 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+169: INFO:     172.24.0.1:52496 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+170: INFO:     172.24.0.1:53646 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+171: INFO:     172.24.0.1:53660 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+172: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+FOUND at line 159:
+159: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+160: Segment count: 140
+161: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+162: INFO:     172.24.0.1:52478 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+163: INFO:     172.24.0.1:52480 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+164: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+165: Segment count: 140
+166: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+167: INFO:     172.24.0.1:52482 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+168: INFO:     172.24.0.1:52492 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+169: INFO:     172.24.0.1:52496 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+170: INFO:     172.24.0.1:53646 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+171: INFO:     172.24.0.1:53660 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+172: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+173: Segment count: 140
+174: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+175: INFO:     172.24.0.1:53664 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+176: INFO:     172.24.0.1:53672 - "GET /jobs/6983c61354698ebd5320af00/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc HTTP/1.1" 200 OK
+177: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+178: Segment count: 140
+FOUND at line 164:
+164: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+165: Segment count: 140
+166: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+167: INFO:     172.24.0.1:52482 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+168: INFO:     172.24.0.1:52492 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+169: INFO:     172.24.0.1:52496 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+170: INFO:     172.24.0.1:53646 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+171: INFO:     172.24.0.1:53660 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+172: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+173: Segment count: 140
+174: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+175: INFO:     172.24.0.1:53664 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+176: INFO:     172.24.0.1:53672 - "GET /jobs/6983c61354698ebd5320af00/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc HTTP/1.1" 200 OK
+177: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+178: Segment count: 140
+179: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+180: INFO:     172.24.0.1:53678 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+181: INFO:     172.24.0.1:53690 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+182: INFO:     172.24.0.1:53692 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+183: INFO:     172.24.0.1:39898 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+FOUND at line 172:
+172: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+173: Segment count: 140
+174: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+175: INFO:     172.24.0.1:53664 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+176: INFO:     172.24.0.1:53672 - "GET /jobs/6983c61354698ebd5320af00/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc HTTP/1.1" 200 OK
+177: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+178: Segment count: 140
+179: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+180: INFO:     172.24.0.1:53678 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+181: INFO:     172.24.0.1:53690 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+182: INFO:     172.24.0.1:53692 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+183: INFO:     172.24.0.1:39898 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+184: INFO:     172.24.0.1:39904 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+185: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+186: Segment count: 140
+187: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+188: INFO:     172.24.0.1:39906 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+189: INFO:     172.24.0.1:39912 - "GET /jobs/6983c61354698ebd5320af00/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc HTTP/1.1" 200 OK
+190: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+191: Segment count: 140
+FOUND at line 177:
+177: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+178: Segment count: 140
+179: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+180: INFO:     172.24.0.1:53678 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+181: INFO:     172.24.0.1:53690 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+182: INFO:     172.24.0.1:53692 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+183: INFO:     172.24.0.1:39898 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+184: INFO:     172.24.0.1:39904 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+185: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+186: Segment count: 140
+187: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+188: INFO:     172.24.0.1:39906 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+189: INFO:     172.24.0.1:39912 - "GET /jobs/6983c61354698ebd5320af00/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc HTTP/1.1" 200 OK
+190: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+191: Segment count: 140
+192: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+193: INFO:     172.24.0.1:39922 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+194: INFO:     172.24.0.1:39926 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+195: INFO:     172.24.0.1:39934 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+196: Listing jobs for user 698288704038791df8f914fe
+FOUND at line 185:
+185: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+186: Segment count: 140
+187: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+188: INFO:     172.24.0.1:39906 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+189: INFO:     172.24.0.1:39912 - "GET /jobs/6983c61354698ebd5320af00/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc HTTP/1.1" 200 OK
+190: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+191: Segment count: 140
+192: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+193: INFO:     172.24.0.1:39922 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+194: INFO:     172.24.0.1:39926 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+195: INFO:     172.24.0.1:39934 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+196: Listing jobs for user 698288704038791df8f914fe
+197: Found 1 jobs
+198: INFO:     172.24.0.1:39950 - "GET /jobs HTTP/1.1" 200 OK
+199: Listing jobs for user 698288704038791df8f914fe
+200: Found 1 jobs
+201: INFO:     172.24.0.1:39964 - "GET /jobs HTTP/1.1" 200 OK
+202: INFO:     172.24.0.1:39974 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+203: INFO:     172.24.0.1:39990 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+204: INFO:     172.24.0.1:40008 - "GET /jobs/6983c61354698ebd5320af00/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc HTTP/1.1" 200 OK
+FOUND at line 190:
+190: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+191: Segment count: 140
+192: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+193: INFO:     172.24.0.1:39922 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+194: INFO:     172.24.0.1:39926 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+195: INFO:     172.24.0.1:39934 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+196: Listing jobs for user 698288704038791df8f914fe
+197: Found 1 jobs
+198: INFO:     172.24.0.1:39950 - "GET /jobs HTTP/1.1" 200 OK
+199: Listing jobs for user 698288704038791df8f914fe
+200: Found 1 jobs
+201: INFO:     172.24.0.1:39964 - "GET /jobs HTTP/1.1" 200 OK
+202: INFO:     172.24.0.1:39974 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+203: INFO:     172.24.0.1:39990 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+204: INFO:     172.24.0.1:40008 - "GET /jobs/6983c61354698ebd5320af00/events?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc HTTP/1.1" 200 OK
+205: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+206: Segment count: 140
+207: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+208: INFO:     172.24.0.1:40006 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+209: INFO:     172.24.0.1:40010 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+FOUND at line 205:
+205: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+206: Segment count: 140
+207: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+208: INFO:     172.24.0.1:40006 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+209: INFO:     172.24.0.1:40010 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+210: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+211: Segment count: 140
+212: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+213: INFO:     172.24.0.1:40024 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+214: INFO:     172.24.0.1:40040 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+215: INFO:     172.24.0.1:40042 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+216: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+217: Segment count: 140
+218: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+219: INFO:     172.24.0.1:40052 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+220: INFO:     172.24.0.1:40066 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+221: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+222: Segment count: 140
+223: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+224: INFO:     172.24.0.1:40068 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+FOUND at line 210:
+210: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+211: Segment count: 140
+212: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+213: INFO:     172.24.0.1:40024 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+214: INFO:     172.24.0.1:40040 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+215: INFO:     172.24.0.1:40042 - "GET /jobs/6983c61354698ebd5320af00 HTTP/1.1" 200 OK
+216: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+217: Segment count: 140
+218: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+219: INFO:     172.24.0.1:40052 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+220: INFO:     172.24.0.1:40066 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+221: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+222: Segment count: 140
+223: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+224: INFO:     172.24.0.1:40068 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+225: INFO:     172.24.0.1:40076 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+226: INFO:     172.24.0.1:40084 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+FOUND at line 216:
+216: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+217: Segment count: 140
+218: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+219: INFO:     172.24.0.1:40052 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+220: INFO:     172.24.0.1:40066 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+221: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+222: Segment count: 140
+223: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+224: INFO:     172.24.0.1:40068 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+225: INFO:     172.24.0.1:40076 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+226: INFO:     172.24.0.1:40084 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+FOUND at line 221:
+221: DEBUG TRANSCRIPT for 6983c61354698ebd5320af00. Keys: ['segments', 'language', 'text']
+222: Segment count: 140
+223: Sample segment: {'start': 1.297, 'end': 4.43268345323741, 'text': "doesn't look like you're in the train", 'speaker': 'SPEAKER_00'}
+224: INFO:     172.24.0.1:40068 - "GET /jobs/6983c61354698ebd5320af00/transcript HTTP/1.1" 200 OK
+225: INFO:     172.24.0.1:40076 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK
+226: INFO:     172.24.0.1:40084 - "GET /jobs/6983c61354698ebd5320af00/summary HTTP/1.1" 200 OK

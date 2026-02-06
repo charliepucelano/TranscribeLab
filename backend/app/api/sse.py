@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
-from app.api.auth import get_current_user
+
 from app.models.user import User
 from app.core.config import settings
 from app.core.database import db
