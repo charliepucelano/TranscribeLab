@@ -6,12 +6,14 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Button, Input } from '@/components/ui';
 import styles from '../auth.module.css';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterPage() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
@@ -33,18 +35,35 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            // Register
-            const response = await api.post('/auth/register', {
+            // 1. Register
+            const registerResponse = await api.post('/auth/register', {
                 email,
                 password
             });
 
-            // Show recovery key
-            if (response.data && response.data.recovery_key) {
-                setRecoveryKey(response.data.recovery_key);
+            // 2. Auto-Login (Get Token)
+            try {
+                const formData = new FormData();
+                formData.append('username', email);
+                formData.append('password', password);
+
+                // Removing Content-Type header is handled by interceptor now
+                const loginResponse = await api.post('/auth/token', formData);
+
+                if (loginResponse.data?.access_token) {
+                    localStorage.setItem('token', loginResponse.data.access_token);
+                }
+            } catch (loginErr) {
+                console.error("Auto-login failed:", loginErr);
+                // We don't stop the flow, user can login manually later if needed, 
+                // but we still show recovery key.
+            }
+
+            // 3. Show recovery key
+            if (registerResponse.data && registerResponse.data.recovery_key) {
+                setRecoveryKey(registerResponse.data.recovery_key);
             } else {
-                // Fallback if no key returned (shouldn't happen with new backend)
-                router.push('/auth/login');
+                router.push('/dashboard');
             }
 
         } catch (err: any) {
@@ -55,8 +74,9 @@ export default function RegisterPage() {
         }
     };
 
-    const handleLoginRedirect = () => {
-        router.push('/auth/login');
+    const handleDashboardRedirect = () => {
+        // Token should be in localStorage from auto-login
+        router.push('/dashboard');
     }
 
     if (recoveryKey) {
@@ -75,8 +95,8 @@ export default function RegisterPage() {
                         </div>
                     </div>
 
-                    <Button onClick={handleLoginRedirect} fullWidth variant="secondary">
-                        I have saved my Recovery Key. Proceed to Login.
+                    <Button onClick={handleDashboardRedirect} fullWidth variant="secondary">
+                        I have saved my Recovery Key. Proceed to Dashboard.
                     </Button>
                 </div>
             </div>
@@ -93,31 +113,52 @@ export default function RegisterPage() {
                     {error && <div style={{ color: 'hsl(var(--destructive))', fontSize: '0.875rem', textAlign: 'center' }}>{error}</div>}
 
                     <Input
-                        label="Email"
-                        type="email"
-                        placeholder="name@example.com"
+                        label="Username"
+                        type="text"
+                        placeholder="username"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
 
-                    <Input
-                        label="Password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <Input
+                            label="Password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                                position: 'absolute',
+                                right: '10px',
+                                top: '38px',
+                                background: 'none',
+                                border: 'none',
+                                color: '#666',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
 
                     <Input
                         label="Confirm Password"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
                     />
+
+                    <p style={{ fontSize: '0.75rem', color: '#888', marginTop: '-0.5rem', marginBottom: '1rem', lineHeight: '1.4' }}>
+                        Your data is <strong>encrypted and securely stored on your private server</strong>.
+                    </p>
 
                     <Button type="submit" fullWidth disabled={loading}>
                         {loading ? 'Creating account...' : 'Create Account'}

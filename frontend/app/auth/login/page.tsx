@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Button, Input } from '@/components/ui';
 import styles from '../auth.module.css';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -13,6 +14,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,9 +32,7 @@ export default function LoginPage() {
             formData.append('username', email);
             formData.append('password', password);
 
-            const response = await api.post('/auth/token', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' } // Axios handles boundary
-            });
+            const response = await api.post('/auth/token', formData);
 
             const { access_token } = response.data;
             if (access_token) {
@@ -41,7 +41,18 @@ export default function LoginPage() {
             }
         } catch (err: any) {
             console.error(err);
-            setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+            let errorMessage = 'Login failed. Please check your credentials.';
+            if (err.response?.data?.detail) {
+                if (typeof err.response.data.detail === 'string') {
+                    errorMessage = err.response.data.detail;
+                } else if (Array.isArray(err.response.data.detail)) {
+                    // Handle Pydantic validation errors
+                    errorMessage = err.response.data.detail.map((e: any) => e.msg).join(', ');
+                } else if (typeof err.response.data.detail === 'object') {
+                    errorMessage = JSON.stringify(err.response.data.detail);
+                }
+            }
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -57,22 +68,39 @@ export default function LoginPage() {
                     {error && <div style={{ color: 'hsl(var(--destructive))', fontSize: '0.875rem', textAlign: 'center' }}>{error}</div>}
 
                     <Input
-                        label="Email"
-                        type="email"
-                        placeholder="name@example.com"
+                        label="Username"
+                        type="text"
+                        placeholder="username"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
 
-                    <Input
-                        label="Password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <Input
+                            label="Password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                                position: 'absolute',
+                                right: '10px',
+                                top: '38px',
+                                background: 'none',
+                                border: 'none',
+                                color: '#666',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
 
                     <Button type="submit" fullWidth disabled={loading}>
                         {loading ? 'Signing in...' : 'Sign In'}

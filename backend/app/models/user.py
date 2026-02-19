@@ -30,7 +30,9 @@ class PyObjectId(str):
         return str(v)
 
 class UserBase(BaseModel):
-    email: EmailStr
+    email: str
+    is_superuser: bool = False
+    force_password_change: bool = False
 
 class UserCreate(UserBase):
     password: str
@@ -43,10 +45,14 @@ class UserInDB(UserBase):
     key_derivation_salt: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = True
+    is_superuser: bool = False
+    force_password_change: bool = False
     
 class User(UserBase):
     id: PyObjectId = Field(alias="_id")
     is_active: bool
+    is_superuser: bool = False
+    force_password_change: bool = False
 
     class Config:
         populate_by_name = True

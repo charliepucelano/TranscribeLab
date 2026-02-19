@@ -14,8 +14,6 @@ COPY requirements.txt .
 # Install AI dependencies with specific versions to prevent incompatible updates
 # Combining them in one RUN allows the resolver to find a compatible set
 RUN pip install --no-cache-dir \
-    torch==2.1.0 \
-    torchaudio==2.1.0 \
     git+https://github.com/m-bain/whisperX.git \
     --extra-index-url https://download.pytorch.org/whl/cpu
 

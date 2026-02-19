@@ -24,7 +24,6 @@ async def create_job(
     language: str = Form("en"),
     num_speakers: Optional[int] = Form(None),
     config: Optional[str] = Form(None), # JSON string of configuration
-    meeting_type: str = Form("General Meeting"),
     job_name: Optional[str] = Form(None),
     background_tasks: BackgroundTasks = BackgroundTasks(), # Correct way to use it in FastAPI
     current_user: User = Depends(get_current_user)
@@ -33,11 +32,6 @@ async def create_job(
     if not job_name:
         job_name = file.filename
 
-    # Convert meeting_type string to enum
-    try:
-        meeting_type_enum = MeetingType(meeting_type)
-    except ValueError:
-        meeting_type_enum = MeetingType.GENERAL
 
     # Parse Config
     job_config = JobConfig()
@@ -114,7 +108,7 @@ async def create_job(
         file_path=file_path,
         language=language,
         num_speakers=num_speakers if num_speakers and num_speakers > 0 else None,
-        meeting_type=meeting_type_enum,
+
         user_id=str(current_user.id),
         file_key=encode_bytes(file_key),
         job_name=job_name,
@@ -128,13 +122,14 @@ async def create_job(
     
     new_job = await db.get_db().jobs.insert_one(job_dict)
     created_job = await db.get_db().jobs.find_one({"_id": new_job.inserted_id})
+    created_job["_id"] = str(created_job["_id"])
     
     # Trigger Background Transcription
     background_tasks.add_task(transcription_service.process_job, str(new_job.inserted_id))
     
     return Job(**created_job)
 
-@router.get("", response_model=List[Job])
+@router.get("")
 async def list_jobs(current_user: User = Depends(get_current_user)):
     try:
         print(f"Listing jobs for user {current_user.id}")
@@ -148,7 +143,8 @@ async def list_jobs(current_user: User = Depends(get_current_user)):
                 if "_id" in job_data and not isinstance(job_data["_id"], str):
                     job_data["_id"] = str(job_data["_id"])
                 
-                results.append(Job(**job_data))
+                validated = Job(**job_data)
+                results.append(validated.model_dump(by_alias=True))
             except Exception as val_e:
                 print(f"SKIP JOB {job_data.get('_id')}: Validation failed: {val_e}")
                 import traceback
@@ -157,8 +153,12 @@ async def list_jobs(current_user: User = Depends(get_current_user)):
         return results
     except Exception as e:
         import traceback
+        tb = traceback.format_exc()
         traceback.print_exc()
         print(f"CRITICAL ERROR IN LIST_JOBS: {e}")
+        # Temp debug: write to file since Docker log capture is broken
+        with open("/tmp/transcribe_errors.log", "a") as f:
+            f.write(f"\n=== LIST_JOBS ERROR ===\n{tb}\n")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{job_id}/retry", response_model=Job)
@@ -189,6 +189,7 @@ async def retry_job(
     background_tasks.add_task(transcription_service.process_job, job_id)
     
     updated_job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id)})
+    updated_job["_id"] = str(updated_job["_id"])
     return Job(**updated_job)
 
 @router.post("/{job_id}/diarize", response_model=Job)
@@ -249,7 +250,7 @@ async def delete_job(job_id: str, current_user: User = Depends(get_current_user)
     await db.get_db().jobs.delete_one({"_id": ObjectId(job_id)})
     return None
 
-@router.get("/{job_id}", response_model=Job)
+@router.get("/{job_id}")
 async def get_job(job_id: str, current_user: User = Depends(get_current_user)):
     job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
     if not job:
@@ -259,21 +260,22 @@ async def get_job(job_id: str, current_user: User = Depends(get_current_user)):
         # Convert _id to string for Pydantic if needed
         job["_id"] = str(job["_id"])
         
-        # DEBUG: Print job content to logs to debug validation error
-        # print(f"DEBUG JOB for {job_id}: {job}") 
-        
-        return Job(**job)
+        validated = Job(**job)
+        return validated.model_dump(by_alias=True)
     except Exception as e:
         import traceback
+        tb = traceback.format_exc()
         traceback.print_exc()
         print(f"!!! Pydantic Validation Error for job {job_id}: {e}")
+        with open("/tmp/transcribe_errors.log", "a") as f:
+            f.write(f"\n=== GET_JOB ERROR {job_id} ===\n{tb}\nData keys: {list(job.keys())}\n")
         # Print detailed validation errors if it's a Pydantic error
         if hasattr(e, 'errors'):
              print(f"Validation Details: {e.errors()}")
         print(f"Failing Data: {job}")
         try:
             # Return a fallback to keep UI alive
-            return Job(
+            fallback = Job(
                 id=str(job["_id"]), 
                 user_id=str(job["user_id"]), 
                 job_name=job.get("job_name", "Unknown Job"),
@@ -284,6 +286,7 @@ async def get_job(job_id: str, current_user: User = Depends(get_current_user)):
                 status_message=f"Data Validation Error: {str(e)[:100]}",
                 progress=0
             )
+            return fallback.model_dump(by_alias=True)
         except Exception as fallback_e:
              print(f"FATAL: Fallback creation failed: {fallback_e}")
              traceback.print_exc()
@@ -389,19 +392,29 @@ async def update_transcript(job_id: str, update: TranscriptUpdate, current_user:
 
 class SummarizeRequest(BaseModel):
     template_name: Optional[str] = None
+    context_date: Optional[str] = None
+    context_participants: Optional[str] = None
+    context_notes: Optional[str] = None
 
-@router.post("/{job_id}/summarize")
-async def summarize_job(job_id: str, request: Optional[SummarizeRequest] = None, current_user: User = Depends(get_current_user)):
-    template_name = request.template_name if request else None
-    job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-        
-    if job.get("status") != JobStatus.COMPLETED or not job.get("transcript_path"):
-        raise HTTPException(status_code=400, detail="Transcript must be ready before summarization")
-        
-    # 1. Decrypt Transcript
+async def process_summary_task(
+    job_id: str, 
+    template_name: Optional[str], 
+    user_id: str,
+    context_date: Optional[str] = None,
+    context_participants: Optional[str] = None,
+    context_notes: Optional[str] = None
+):
+    """
+    Background task to generate summary and update the job.
+    """
+    print(f"Starting background summary for job {job_id}...")
     try:
+        job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id)})
+        if not job:
+            print(f"Job {job_id} not found during background summary.")
+            return
+
+        # 1. Decrypt Transcript
         encrypted_file_key = job.get("file_key")
         file_key = decode_str(encrypted_file_key)
         
@@ -412,36 +425,77 @@ async def summarize_job(job_id: str, request: Optional[SummarizeRequest] = None,
         decrypted_json_bytes = decrypt_data(encrypted_content, file_key)
         transcript_data = json.loads(decrypted_json_bytes.decode('utf-8'))
         
-        # Combine segments into full text
-        # Combine segments into full text WITH Speaker attribution
-        # We ignore top-level 'text' because it lacks speaker labels
+        # Combine segments
         segments = transcript_data.get("segments", [])
         if segments:
             full_text = "\n".join([f"{s.get('speaker', 'Unknown')}: {s.get('text', '')}" for s in segments])
         else:
-             full_text = transcript_data.get("text", "")
-            
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to decrypt transcript: {e}")
+            full_text = transcript_data.get("text", "")
 
-    # 2. Generate Summary
-    # Prioritize selected template, then job's meeting type, then default
-    meeting_type = template_name if template_name else job.get("meeting_type", "General Meeting")
-    language = job.get("language", "en")
+        # 2. Generate Summary
+        meeting_type = template_name if template_name else job.get("meeting_type", "General Meeting")
+        language = job.get("language", "en")
+        
+        summary = await generate_summary(
+            full_text, 
+            meeting_type=meeting_type, 
+            language=language, 
+            user_id=user_id,
+            context_date=context_date,
+            context_participants=context_participants,
+            context_notes=context_notes
+        )
+        
+        # 3. Store Summary (Encrypted)
+        summary_bytes = summary.encode('utf-8')
+        encrypted_summary = encrypt_data(summary_bytes, file_key)
+        encrypted_summary_str = encode_bytes(encrypted_summary) 
+        
+        await db.get_db().jobs.update_one(
+            {"_id": ObjectId(job_id)},
+            {"$set": {"summary_encrypted": encrypted_summary_str}}
+        )
+        print(f"Background summary completed for job {job_id}")
+        
+    except Exception as e:
+        print(f"Error in background summarization for {job_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        # Optionally update job with error state regarding summary?
+        # For now, we rely on the summary remaining null or checking logs.
+
+@router.post("/{job_id}/summarize")
+async def summarize_job(
+    job_id: str, 
+    request: Optional[SummarizeRequest] = None, 
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    current_user: User = Depends(get_current_user)
+):
+    template_name = request.template_name if request else None
+    context_date = request.context_date if request else None
+    context_participants = request.context_participants if request else None
+    context_notes = request.context_notes if request else None
     
-    summary = await generate_summary(full_text, meeting_type=meeting_type, language=language)
-    
-    # 3. Store Summary (Encrypted)
-    summary_bytes = summary.encode('utf-8')
-    encrypted_summary = encrypt_data(summary_bytes, file_key)
-    encrypted_summary_str = encode_bytes(encrypted_summary) # Store as base64 string
-    
-    await db.get_db().jobs.update_one(
-        {"_id": ObjectId(job_id)},
-        {"$set": {"summary_encrypted": encrypted_summary_str}}
+    # Verify job existance and ownership
+    job = await db.get_db().jobs.find_one({"_id": ObjectId(job_id), "user_id": str(current_user.id)})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    if job.get("status") != JobStatus.COMPLETED or not job.get("transcript_path"):
+        raise HTTPException(status_code=400, detail="Transcript must be ready before summarization")
+
+    # Trigger background task
+    background_tasks.add_task(
+        process_summary_task, 
+        job_id, 
+        template_name, 
+        str(current_user.id),
+        context_date,
+        context_participants,
+        context_notes
     )
     
-    return {"status": "summary_generated"}
+    return {"status": "processing", "message": "Summarization started in background"}
 
 @router.get("/{job_id}/summary")
 async def get_job_summary(job_id: str, current_user: User = Depends(get_current_user)):

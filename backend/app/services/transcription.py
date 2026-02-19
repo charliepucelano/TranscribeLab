@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import asyncio
 from typing import Optional, List
 from app.core.config import settings
 from app.core.database import db
@@ -118,7 +119,8 @@ class TranscriptionService:
                  f.write(audio_data)
 
             # 3. Optimize Execution Config & Load Config
-            config = job.get("config", {})
+            raw_config = job.get("config", {})
+            config = raw_config if isinstance(raw_config, dict) else {}
             model_name = os.getenv("WHISPER_MODEL", "large-v3") # Default to large-v3 as properly set now
             
             logger.info(f"Loading WhisperX model: {model_name} on {self.device} ({self.compute_type})")
@@ -131,15 +133,12 @@ class TranscriptionService:
             transcript_file_path = job.get("transcript_file_path")
             
             if transcript_file_path and os.path.exists(transcript_file_path):
-                 await self.update_progress(job_id, "HiDock Mode: Skipping ASR. Loading Transcript...", 10)
+                 await self.update_progress(job_id, "HiDock Mode: Loading Transcript...", 10)
                  
                  # Decrypt/Read transcript file
-                 # Access key again just in case (we have file_key)
                  try:
                      with open(transcript_file_path, "rb") as tf:
                          enc_trans_content = tf.read()
-                     # Try decrypting. If user uploaded plain text (via API not encrypting?) 
-                     # we assume API encrypts EVERYTHING.
                      trans_bytes = decrypt_data(enc_trans_content, file_key)
                      trans_text = trans_bytes.decode('utf-8')
                  except Exception:
@@ -147,32 +146,48 @@ class TranscriptionService:
                      with open(transcript_file_path, "r", encoding="utf-8") as tf:
                          trans_text = tf.read()
 
-                 if transcript_file_path.endswith(".srt"):
-                     # Parse SRT
-                     import re
-                     # Simple SRT parser
-                     pattern = re.compile(r'(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n((?:(?!\d+\n\d{2}:\d{2}:\d{2},\d{3}).)*?)\n\n', re.DOTALL)
-                     matches = pattern.findall(trans_text + "\n\n")
-                     
-                     def parse_time(t_str):
-                         h, m, s_ms = t_str.split(':')
-                         s, ms = s_ms.split(',')
-                         return int(h)*3600 + int(m)*60 + int(s) + int(ms)/1000.0
-
+                 # Parse HiDock TXT format:
+                 # "00:02:39 - 00:03:41 Unknown Speaker:\n\nText content here..."
+                 import re
+                 
+                 def parse_hhmmss(t_str):
+                     parts = t_str.strip().split(':')
+                     return int(parts[0])*3600 + int(parts[1])*60 + int(parts[2])
+                 
+                 hidock_pattern = re.compile(
+                     r'(\d{2}:\d{2}:\d{2})\s*-\s*(\d{2}:\d{2}:\d{2})\s+(.+?):\s*\n\s*\n(.*?)(?=\n\d{2}:\d{2}:\d{2}\s*-|\Z)',
+                     re.DOTALL
+                 )
+                 matches = hidock_pattern.findall(trans_text)
+                 
+                 if matches:
+                     # Structured HiDock format detected
+                     await self.update_progress(job_id, f"HiDock Mode: Parsed {len(matches)} segments with timestamps.", 15)
                      segments = []
                      for m in matches:
-                         start = parse_time(m[1])
-                         end = parse_time(m[2])
-                         text_content = m[3].replace('\n', ' ').strip()
-                         segments.append({"start": start, "end": end, "text": text_content})
-                         
+                         start = parse_hhmmss(m[0])
+                         end = parse_hhmmss(m[1])
+                         speaker = m[2].strip()
+                         text_content = m[3].strip()
+                         if text_content:
+                             segments.append({
+                                 "start": float(start), 
+                                 "end": float(end), 
+                                 "text": text_content,
+                                 "speaker": speaker
+                             })
+                     
+                     result = {"segments": segments, "language": job.get("language", "en")}
+                     logger.info(f"HiDock TXT parsed: {len(segments)} segments")
                  else:
-                     # Assume TXT - Split by sentences
-                     import re
-                     sentences = re.split(r'(?<=[.!?])\s+', trans_text)
-                     segments = [{"text": s.strip(), "start": 0.0, "end": 0.0} for s in sentences if s.strip()]
-
-                 result = {"segments": segments, "language": job.get("language", "en")}
+                     # Plain text fallback — no HiDock structure detected
+                     # Create one giant segment; alignment will break it down by words.
+                     await self.update_progress(job_id, "HiDock Mode (Plain TXT): Pre-loading audio for alignment setup...", 12)
+                     audio = await asyncio.to_thread(whisperx.load_audio, temp_audio_path)
+                     duration = len(audio) / 16000.0
+                     
+                     segments = [{"text": trans_text.strip(), "start": 0.0, "end": duration}]
+                     result = {"segments": segments, "language": job.get("language", "en")}
 
             # CHECK FOR LEGACY ALIGNMENT MODE (Text provided in DB field)
             elif job.get("transcript_text"):
@@ -193,21 +208,22 @@ class TranscriptionService:
                     "vad_offset": config.get("vad_offset", 0.363)
                 }
                 
-                model = whisperx.load_model(
+                model = await asyncio.to_thread(
+                    whisperx.load_model,
                     model_name, 
                     self.device, 
                     compute_type=self.compute_type, 
                     download_root=settings.TRANSCRIPT_STORAGE_PATH,
-                    # Injecting VAD options into load_model if supported? 
-                    # WhisperX load_model signature: (..., vad_options=None, ...)
                     vad_options=vad_options
                 )
                 
-                audio = whisperx.load_audio(temp_audio_path)
+                # Ensure audio is loaded if not already
+                if 'audio' not in locals():
+                    audio = await asyncio.to_thread(whisperx.load_audio, temp_audio_path)
                 
                 # Update progress before heavy work
                 await self.update_progress(job_id, "Transcribing audio (this may take a while)...", 20)
-                result = model.transcribe(audio, batch_size=self.batch_size)
+                result = await asyncio.to_thread(model.transcribe, audio, batch_size=self.batch_size)
                 
                 # Free ASR model
                 del model
@@ -218,13 +234,14 @@ class TranscriptionService:
             # 4. Alignment (Optional phase)
             try:
                 await self.update_progress(job_id, "Aligning text...", 60)
-                audio = whisperx.load_audio(temp_audio_path) # Reload usually fast or cached?
+                if 'audio' not in locals():
+                     audio = await asyncio.to_thread(whisperx.load_audio, temp_audio_path)
                 logger.info(f"Loading alignment model for language {result['language']}...")
-                model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=self.device)
+                model_a, metadata = await asyncio.to_thread(whisperx.load_align_model, language_code=result["language"], device=self.device)
                 
                 if model_a is not None:
                     logger.info("Performing alignment...")
-                    result = whisperx.align(result["segments"], model_a, metadata, audio, self.device, return_char_alignments=False)
+                    result = await asyncio.to_thread(whisperx.align, result["segments"], model_a, metadata, audio, self.device, return_char_alignments=False)
                     # Free alignment model
                     del model_a
                     gc.collect()
@@ -246,20 +263,20 @@ class TranscriptionService:
             if settings.HF_TOKEN:
                 try:
                     await self.update_progress(job_id, "Diarizing speakers (Loading model)...", 80)
-                    diarize_model = whisperx.diarize.DiarizationPipeline(use_auth_token=settings.HF_TOKEN, device=self.device)
+                    diarize_model = await asyncio.to_thread(whisperx.diarize.DiarizationPipeline, use_auth_token=settings.HF_TOKEN, device=self.device)
                     
                     await self.update_progress(job_id, "Diarizing speakers (Processing)...", 90)
                     
                     # Ensure audio is loaded (if ASR/Align skipped or failed)
                     if 'audio' not in locals():
-                         audio = whisperx.load_audio(temp_audio_path)
+                         audio = await asyncio.to_thread(whisperx.load_audio, temp_audio_path)
                     
                     min_speakers = config.get("min_speakers")
                     max_speakers = config.get("max_speakers")
                     
-                    diarize_segments = diarize_model(audio, min_speakers=min_speakers, max_speakers=max_speakers)
+                    diarize_segments = await asyncio.to_thread(diarize_model, audio, min_speakers=min_speakers, max_speakers=max_speakers)
                     
-                    result = whisperx.assign_word_speakers(diarize_segments, result)
+                    result = await asyncio.to_thread(whisperx.assign_word_speakers, diarize_segments, result)
                     
                     # Free diarize model
                     del diarize_model
@@ -280,7 +297,7 @@ class TranscriptionService:
             result_json = json.dumps(result).encode('utf-8')
             encrypted_transcript = encrypt_data(result_json, file_key)
             
-            transcript_filename = f"{job['filename']}.json.enc"
+            transcript_filename = f"{job.get('filename', job_id)}.json.enc"
             transcript_path = os.path.join(os.path.dirname(file_path), transcript_filename)
             
             with open(transcript_path, "wb") as f:

@@ -55,7 +55,7 @@ async def list_templates(language: str = "en", current_user: User = Depends(get_
         
     return results
 
-@router.post("/", response_model=CustomTemplate, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CustomTemplate, status_code=status.HTTP_201_CREATED)
 async def create_template(request: CreateTemplateRequest, current_user: User = Depends(get_current_user)):
     new_template = CustomTemplate(
         user_id=str(current_user.id),
@@ -100,3 +100,48 @@ async def update_template(template_id: str, request: UpdateTemplateRequest, curr
         raise HTTPException(status_code=404, detail="Template not found or not authorized")
         
     return await db.get_db().templates.find_one({"_id": ObjectId(template_id)})
+
+@router.get("/{template_id}", response_model=TemplateResponse)
+async def get_template_details(template_id: str, language: str = "en", current_user: User = Depends(get_current_user)):
+    """
+    Get details of a specific template. 
+    Accepts either a MongoDB ObjectId (for custom templates) or a template name (for built-in).
+    """
+    
+    # 1. Try as Custom Template (ObjectId)
+    if ObjectId.is_valid(template_id):
+        # Must match user_id to ensure ownership/visibility
+        custom_template = await db.get_db().templates.find_one({
+            "_id": ObjectId(template_id),
+            "user_id": str(current_user.id)
+        })
+        if custom_template:
+            return TemplateResponse(
+                id=str(custom_template["_id"]),
+                name=custom_template["name"],
+                description=custom_template.get("description"),
+                system_instruction=custom_template["system_instruction"],
+                language=custom_template["language"],
+                is_custom=True,
+                can_edit=True
+            )
+            
+    # 2. Try as Built-in Template (Name)
+    # We decod URL enconding just in case, though FastAPI handles path params well
+    from urllib.parse import unquote
+    decoded_id = unquote(template_id)
+    
+    lang_templates = TEMPLATES.get(language, TEMPLATES["en"])
+    if decoded_id in lang_templates:
+        tmpl = lang_templates[decoded_id]
+        return TemplateResponse(
+            id=decoded_id,
+            name=tmpl.name,
+            description=tmpl.system_instruction[:100] + "...", # Approximate description
+            system_instruction=tmpl.system_instruction,
+            language=language,
+            is_custom=False,
+            can_edit=False # Built-ins are read-only source
+        )
+        
+    raise HTTPException(status_code=404, detail="Template not found")

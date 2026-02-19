@@ -29,7 +29,6 @@ export default function UploadPage() {
     const [jobName, setJobName] = useState('');
     const [language, setLanguage] = useState('en');
     const [numSpeakers, setNumSpeakers] = useState(''); // Legacy/Simple
-    const [meetingType, setMeetingType] = useState('General Meeting');
 
     const handleDrag = (e: React.DragEvent) => {
         // ... existing handleDrag ...
@@ -105,7 +104,7 @@ export default function UploadPage() {
         }
 
         if (numSpeakers) formData.append('num_speakers', numSpeakers); // Keep for legacy
-        formData.append('meeting_type', meetingType);
+
         if (jobName) formData.append('job_name', jobName);
 
         // Construct Config
@@ -206,22 +205,7 @@ export default function UploadPage() {
                             disabled={uploading}
                         />
 
-                        <div className="input-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'hsl(var(--foreground))' }}>Meeting Type</label>
-                            <select
-                                className={styles.select}
-                                value={meetingType}
-                                onChange={(e) => setMeetingType(e.target.value)}
-                                disabled={uploading}
-                            >
-                                <option value="General Meeting">General Meeting</option>
-                                <option value="Interview">Interview</option>
-                                <option value="Team Standup">Team Standup</option>
-                                <option value="Client Call">Client Call</option>
-                                <option value="Sales Call">Sales Call</option>
-                                <option value="Brainstorming Session">Brainstorming Session</option>
-                            </select>
-                        </div>
+
 
                         <div className="input-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                             <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'hsl(var(--foreground))' }}>Language</label>

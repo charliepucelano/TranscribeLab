@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api';
 import { Button } from '@/components/ui';
-import { Play, Pause, Save, Wand2, Users, Scissors, Edit } from 'lucide-react';
+import { Play, Pause, Save, Wand2, Users, Scissors, Edit, Copy } from 'lucide-react';
 import { SpeakerEditModal } from '@/components/SpeakerEditModal';
 import styles from './editor.module.css';
 import ReactMarkdown from 'react-markdown';
@@ -31,6 +31,11 @@ export default function EditorPage() {
     const [segments, setSegments] = useState<Segment[]>([]);
     const [job, setJob] = useState<any>(null);
     const [summary, setSummary] = useState('');
+    const [summaryContext, setSummaryContext] = useState({
+        date: '',
+        participants: '',
+        notes: ''
+    });
 
     // Template State
     const [templates, setTemplates] = useState<Template[]>([]);
@@ -39,6 +44,11 @@ export default function EditorPage() {
 
     // Smart Edit Modal State
     const [editSpeakerModal, setEditSpeakerModal] = useState<{ isOpen: boolean, speaker: string, segmentId: number } | null>(null);
+
+    // UI State
+    const [isContextOpen, setIsContextOpen] = useState(false);
+    const [isDraggingContext, setIsDraggingContext] = useState(false);
+    const hasSummary = !!summary && summary !== "Generating summary... This may take a few minutes.";
 
     useEffect(() => {
         fetchTemplates();
@@ -155,10 +165,6 @@ export default function EditorPage() {
         };
     }, [jobId, job?.status]); // Re-run if status changes (e.g. from pending to processing)
 
-    // Initial Fetch (One-off)
-    useEffect(() => {
-        fetchData();
-    }, [jobId]);
 
     const handleTextChange = (id: number, newText: string) => {
         setSegments(prev => prev.map(s => s.id === id ? { ...s, text: newText } : s));
@@ -210,14 +216,39 @@ export default function EditorPage() {
     };
 
     const generateSummary = async () => {
-        setSummary("Generating summary... This may take a moment.");
+        const previousSummary = summary;
+        setSummary("Generating summary... This may take a few minutes.");
         try {
-            await api.post(`/jobs/${jobId}/summarize`, { template_name: selectedTemplate });
-            const sumRes = await api.get(`/jobs/${jobId}/summary`);
-            setSummary(sumRes.data.summary || "Summary generated but returned empty.");
+            // Trigger background task
+            await api.post(`/jobs/${jobId}/summarize`, {
+                template_name: selectedTemplate,
+                context_date: summaryContext.date || undefined,
+                context_participants: summaryContext.participants || undefined,
+                context_notes: summaryContext.notes || undefined
+            });
+
+            // Start Polling
+            const pollInterval = setInterval(async () => {
+                try {
+                    const res = await api.get(`/jobs/${jobId}/summary`);
+                    // Only update if summary exists AND is different from the one we started with
+                    // OR if we started with nothing and got something.
+                    if (res.data.summary && res.data.summary !== previousSummary) {
+                        setSummary(res.data.summary);
+                        clearInterval(pollInterval);
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            }, 3000); // Poll every 3 seconds
+
+            // Safety timeout to stop polling after 15 minutes
+            setTimeout(() => clearInterval(pollInterval), 15 * 60 * 1000);
+
         } catch (err) {
-            setSummary("Error generating summary. Please try again.");
+            setSummary(previousSummary || "Error starting summarization."); // Revert on failure
             console.error(err);
+            alert("Failed to start summarization.");
         }
     };
 
@@ -263,6 +294,71 @@ export default function EditorPage() {
         });
     };
 
+    // ICS Drag & Drop Handlers
+    const handleContextDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDraggingContext(true);
+    };
+
+    const handleContextDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDraggingContext(false);
+    };
+
+    const handleContextDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDraggingContext(false);
+
+        const files = e.dataTransfer.files;
+        if (files.length === 0) return;
+
+        const file = files[0];
+        if (!file.name.toLowerCase().endsWith('.ics')) {
+            alert("Please drop a valid .ics calendar file.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // Open the context section to show results
+            if (!isContextOpen) setIsContextOpen(true);
+
+            // Optimistic UI update or loading state could go here
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/utils/parse-ics`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!res.ok) throw new Error("Failed to parse ICS file");
+
+            const data = await res.json();
+
+            // Auto-fill context
+            setSummaryContext(prev => ({
+                ...prev,
+                date: data.date || prev.date,
+                participants: data.participants || prev.participants,
+                notes: data.notes ? (prev.notes ? `${prev.notes}\n\n${data.notes}` : data.notes) : prev.notes
+            }));
+
+        } catch (error) {
+            console.error("Error parsing ICS:", error);
+            alert("Failed to import calendar details.");
+        }
+    };
+
+    const copySummary = () => {
+        if (!summary) return;
+        // Strip metadata footer (starts with "---")
+        const cleanSummary = summary.split("\n\n---\n**Summary Details:**")[0];
+        navigator.clipboard.writeText(cleanSummary);
+        // Could add a toast or temporary state here
+        alert("Summary copied to clipboard!");
+    };
+
     if (loading) return <div className={styles.loading}>Loading Editor...</div>;
 
     return (
@@ -281,7 +377,7 @@ export default function EditorPage() {
                 </div>
             </div>
 
-            <div className={styles.container}>
+            <div className={`${styles.container} ${hasSummary ? styles.hasSummary : ''}`}>
                 {/* Left: Transcript */}
                 <div className={styles.leftPanel}>
                     <div className={styles.panelHeader}>
@@ -405,10 +501,81 @@ export default function EditorPage() {
                                     </option>
                                 ))}
                             </select>
-                            <Button size="small" variant="ghost" onClick={generateSummary} title="Generate Summary">
+                            <Button
+                                size="small"
+                                variant="ghost"
+                                onClick={generateSummary}
+                                title="Generate Summary"
+                                disabled={summary === "Generating summary... This may take a few minutes."}
+                            >
                                 <Wand2 size={16} />
                             </Button>
+                            <Button
+                                size="small"
+                                variant="ghost"
+                                onClick={copySummary}
+                                title="Copy Summary to Clipboard"
+                                disabled={!summary || summary === "Generating summary... This may take a few minutes."}
+                                style={{ gap: '0.5rem' }}
+                            >
+                                <Copy size={16} />
+                                Copy
+                            </Button>
                         </div>
+                    </div>
+
+                    {/* Collapsible Context Inputs */}
+                    <div
+                        className={`${styles.contextSection} ${isDraggingContext ? styles.dragging : ''}`}
+                        onDragOver={handleContextDragOver}
+                        onDragLeave={handleContextDragLeave}
+                        onDrop={handleContextDrop}
+                    >
+                        <button
+                            className={styles.contextToggle}
+                            onClick={() => setIsContextOpen(!isContextOpen)}
+                        >
+                            <span>{isContextOpen ? '▼' : '▶'} Additional Context (Optional)</span>
+                            <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>
+                                {isDraggingContext ? "Drop .ics file here!" : "Drag & Drop .ics file or manually enter"}
+                            </span>
+                        </button>
+
+                        {isContextOpen && (
+                            <div className={styles.contextContent}>
+                                <div className={styles.contextGrid}>
+                                    <div className={styles.contextField}>
+                                        <label className={styles.contextLabel}>Meeting Date</label>
+                                        <input
+                                            type="date"
+                                            className={styles.contextInput}
+                                            value={summaryContext.date}
+                                            onChange={e => setSummaryContext({ ...summaryContext, date: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className={styles.contextField}>
+                                        <label className={styles.contextLabel}>Participants</label>
+                                        <input
+                                            type="text"
+                                            className={styles.contextInput}
+                                            placeholder="e.g. Alice, Bob"
+                                            value={summaryContext.participants}
+                                            onChange={e => setSummaryContext({ ...summaryContext, participants: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.contextField}>
+                                    <label className={styles.contextLabel}>Additional Notes</label>
+                                    <textarea
+                                        className={styles.contextTextarea}
+                                        placeholder="Important context for the AI..."
+                                        value={summaryContext.notes}
+                                        onChange={e => setSummaryContext({ ...summaryContext, notes: e.target.value })}
+                                        rows={2}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className={styles.scrollArea}>
                         <div className={styles.summaryContent}>
@@ -423,16 +590,15 @@ export default function EditorPage() {
                             )}
                         </div>
                     </div>
+                    {/* Modal */}
+                    <SpeakerEditModal
+                        isOpen={!!editSpeakerModal}
+                        onClose={() => setEditSpeakerModal(null)}
+                        currentSpeaker={editSpeakerModal?.speaker || ''}
+                        onSave={saveSpeakerEdit}
+                    />
                 </div>
             </div>
-
-            {/* Modal */}
-            <SpeakerEditModal
-                isOpen={!!editSpeakerModal}
-                onClose={() => setEditSpeakerModal(null)}
-                currentSpeaker={editSpeakerModal?.speaker || ''}
-                onSave={saveSpeakerEdit}
-            />
         </div>
     );
 }

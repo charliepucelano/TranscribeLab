@@ -15,14 +15,13 @@
 
 param (
     [Parameter(Mandatory = $false, Position = 0)]
-    [ValidateSet("start", "stop", "restart", "frontend", "backend", "logs", "status", "clean")]
+    [ValidateSet("start", "stop", "restart", "frontend", "backend", "logs", "status", "clean", "stop-frontend", "restart-frontend", "restart-backend")]
     [string[]]$Command = "status"
 )
 
 # Configuration - Absolute Paths
 $ProjectRoot = "d:\dev\Transcribe"
 $FrontendPath = "$ProjectRoot\frontend"
-$BackendPath = "$ProjectRoot\backend"
 
 # Ensure we operate in the project root for docker-compose
 Set-Location -Path $ProjectRoot
@@ -55,6 +54,31 @@ function Show-Logs {
     docker-compose logs -f backend
 }
 
+function Restart-Backend {
+    Write-Host "Restarting Backend Container..." -ForegroundColor Yellow
+    docker-compose restart backend
+}
+
+function Stop-Frontend {
+    Write-Host "Stopping Frontend (Port 3002)..." -ForegroundColor Yellow
+    
+    # PowerShell Core/7+ uses Get-NetTCPConnection more reliably
+    # Filtering by port 3002
+    try {
+        $connections = Get-NetTCPConnection -LocalPort 3002 -ErrorAction Stop
+        foreach ($conn in $connections) {
+            $pid_to_kill = $conn.OwningProcess
+            if ($pid_to_kill -gt 0) {
+                Write-Host "Killing process $pid_to_kill on port 3002..." -ForegroundColor Red
+                Stop-Process -Id $pid_to_kill -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+    catch {
+        Write-Host "No process found on port 3002 (or access denied)." -ForegroundColor Gray
+    }
+}
+
 switch ($Command) {
     "start" {
         Start-Backend
@@ -79,6 +103,16 @@ switch ($Command) {
     }
     "status" {
         Show-Status
+    }
+    "stop-frontend" {
+        Stop-Frontend
+    }
+    "restart-frontend" {
+        Stop-Frontend
+        Start-Frontend
+    }
+    "restart-backend" {
+        Restart-Backend
     }
     "clean" {
         Write-Host "Removing containers and orphans..." -ForegroundColor Red

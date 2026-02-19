@@ -1,5 +1,6 @@
 
-from typing import Dict
+from typing import Dict, Optional
+from app.core.database import db
 
 class MeetingTemplate:
     def __init__(self, name: str, system_instruction: str, output_structure: str):
@@ -161,7 +162,26 @@ TEMPLATES: Dict[str, Dict[str, MeetingTemplate]] = {
     }
 }
 
-def get_template(meeting_type: str, language: str = "en") -> MeetingTemplate:
+async def get_template(meeting_type: str, language: str = "en", user_id: Optional[str] = None) -> MeetingTemplate:
+    # 1. Try to fetch custom template if user_id is provided
+    if user_id:
+        try:
+            custom_template = await db.get_db().templates.find_one({
+                "user_id": user_id,
+                "name": meeting_type,
+                "language": language
+            })
+            
+            if custom_template:
+                return MeetingTemplate(
+                    name=custom_template["name"],
+                    system_instruction=custom_template["system_instruction"],
+                    output_structure="" # Custom templates generally bake structure into system_instruction or description
+                )
+        except Exception as e:
+            print(f"Error fetching custom template: {e}")
+
+    # 2. Fallback to Built-in
     # Default to English if language not found
     lang_templates = TEMPLATES.get(language, TEMPLATES["en"])
     # Default to General Meeting if type not found in language

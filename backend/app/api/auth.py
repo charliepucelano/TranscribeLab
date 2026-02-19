@@ -139,6 +139,55 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+
+class ChangePasswordRequest(BaseModel):
+    new_password: str
+
+@router.post("/update-password")
+async def update_password(
+    request: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user)
+):
+    # Update password and clear force flag
+    await db.get_db().users.update_one(
+        {"_id": ObjectId(current_user.id)},
+        {"$set": {
+            "hashed_password": get_password_hash(request.new_password),
+            "force_password_change": False
+        }}
+    )
+    return {"message": "Password updated successfully"}
+
+class RecoveryKeyRequest(BaseModel):
+    password: str
+
+@router.post("/recovery-key")
+async def get_recovery_key(
+    request: RecoveryKeyRequest,
+    current_user: User = Depends(get_current_user)
+):
+    # 1. Verify password
+    user_in_db = await db.get_db().users.find_one({"_id": ObjectId(current_user.id)})
+    if not verify_password(request.password, user_in_db["hashed_password"]):
+         raise HTTPException(status_code=400, detail="Incorrect password")
+
+    # 2. Derive KEK
+    try:
+        salt = decode_str(user_in_db["key_derivation_salt"])
+        kek = derive_key(request.password, salt)
+        
+        # 3. Decrypt Master Key
+        encrypted_master_key = decode_str(user_in_db["encrypted_master_key"])
+        from app.core.crypto import decrypt_data
+        master_key = decrypt_data(encrypted_master_key, kek)
+        
+        # 4. Return as hex/string
+        return {"recovery_key": encode_bytes(master_key)}
+    except Exception as e:
+        print(f"Error retrieving recovery key: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve recovery key")
+
 @router.get("/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+

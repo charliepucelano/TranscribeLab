@@ -49,6 +49,17 @@
     color: hsl(var(--accent-foreground));
 }
 
+.outline {
+    border: 1px solid hsl(var(--border));
+    background-color: transparent;
+    color: hsl(var(--foreground));
+}
+
+.outline:hover:not(:disabled) {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+}
+
 /* Sizes */
 .default {
     height: 2.5rem;

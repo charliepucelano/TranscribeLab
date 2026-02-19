@@ -42,24 +42,116 @@
     gap: 1.5rem;
 }
 
+.contextInput {
+    background-color: transparent;
+    /* Use transparent to blend with card/muted */
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+    width: 100%;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    /* Fix for dark mode date picker */
+    color-scheme: dark;
+}
+
 .leftPanel {
-    flex: 2;
+    flex: 4;
+    /* Default: 80% (4:1 ratio approx) */
     display: flex;
     flex-direction: column;
     background-color: hsl(var(--card));
     border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
     overflow: hidden;
+    transition: flex 0.5s ease;
 }
 
 .rightPanel {
     flex: 1;
+    /* Default: 20% */
     display: flex;
     flex-direction: column;
     background-color: hsl(var(--card));
     border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
     overflow: hidden;
+    transition: flex 0.5s ease;
+}
+
+/* State: Summary Exists */
+.container.hasSummary .leftPanel {
+    flex: 2;
+    /* 40% */
+}
+
+.container.hasSummary .rightPanel {
+    flex: 3;
+    /* 60% */
+}
+
+/* Context Section */
+.contextSection {
+    border-bottom: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card));
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.contextSection.dragging {
+    background-color: hsl(var(--accent) / 0.1);
+    border-color: hsl(var(--accent));
+    border-style: dashed;
+}
+
+.contextToggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    width: 100%;
+    text-align: left;
+    outline: none;
+}
+
+.contextToggle:hover {
+    background-color: hsl(var(--muted) / 0.5);
+}
+
+.contextContent {
+    padding: 0 1.5rem 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.contextGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }
 
 .panelHeader {
@@ -94,6 +186,26 @@
     font-family: monospace;
     margin-top: 0.25rem;
     min-width: 80px;
+}
+
+.contextTextarea {
+    background-color: transparent !important;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+    width: 100%;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.contextTextarea:focus {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 1px hsl(var(--primary));
 }
 
 .content {
@@ -186,13 +298,28 @@
     margin-bottom: 1rem;
 }
 
-.markdown ul, .markdown ol {
+.markdown ul,
+.markdown ol {
     margin-bottom: 1rem;
-    padding-left: 1.5rem;
+    padding-left: 1.25rem;
 }
 
 .markdown li {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding-left: 0.25rem;
+}
+
+.markdown li>p {
+    display: inline;
+}
+
+/* Fix nested lists */
+.markdown ul ul,
+.markdown ol ol,
+.markdown ul ol,
+.markdown ol ul {
+    margin-bottom: 0;
+    margin-top: 0.5rem;
 }
 
 .markdown table {
@@ -202,7 +329,8 @@
     font-size: 0.9rem;
 }
 
-.markdown th, .markdown td {
+.markdown th,
+.markdown td {
     border: 1px solid hsl(var(--border));
     padding: 0.5rem;
     text-align: left;
@@ -215,5 +343,5 @@
 
 .markdown strong {
     font-weight: 600;
-    color: hsl(var(--foreground));
+    color: hsl(var(--primary));
 }

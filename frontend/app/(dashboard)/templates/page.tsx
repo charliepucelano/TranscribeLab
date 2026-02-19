@@ -65,38 +65,46 @@ export default function TemplatesPage() {
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {templates.map(t => (
-                        <div key={t.id} style={{
-                            padding: '1.5rem',
-                            borderRadius: '8px',
-                            border: '1px solid hsl(var(--border))',
-                            background: 'hsl(var(--card))',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'start'
-                        }}>
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t.name}</h3>
-                                    {!t.is_custom && (
-                                        <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', background: 'hsl(var(--muted))', borderRadius: '4px' }}>Built-in</span>
-                                    )}
-                                    <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', border: '1px solid hsl(var(--border))', borderRadius: '4px' }}>
-                                        {t.language.toUpperCase()}
-                                    </span>
+                        <Link key={t.id} href={`/templates/edit/${encodeURIComponent(t.id)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <div style={{
+                                padding: '1.5rem',
+                                borderRadius: '8px',
+                                border: '1px solid hsl(var(--border))',
+                                background: 'hsl(var(--card))',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'start',
+                                cursor: 'pointer',
+                                transition: 'border-color 0.2s',
+                            }}
+                                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'hsl(var(--primary))'}
+                                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'hsl(var(--border))'}
+                            >
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                        <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t.name}</h3>
+                                        {!t.is_custom && (
+                                            <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', background: 'hsl(var(--muted))', borderRadius: '4px' }}>Built-in</span>
+                                        )}
+                                        <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', border: '1px solid hsl(var(--border))', borderRadius: '4px' }}>
+                                            {t.language.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                                        {t.description || "No description"}
+                                    </p>
                                 </div>
-                                <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                                    {t.description || "No description"}
-                                </p>
-                            </div>
 
-                            {t.can_edit && (
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <Button variant="ghost" size="small" onClick={() => handleDelete(t.id)} style={{ color: 'hsl(var(--destructive))' }}>
-                                        <Trash2 size={16} />
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
+                                {t.can_edit && (
+                                    <div style={{ display: 'flex', gap: '0.5rem' }} onClick={(e) => e.preventDefault()}>
+                                        {/* Prevent Link navigation when clicking delete */}
+                                        <Button variant="ghost" size="small" onClick={(e) => { e.stopPropagation(); handleDelete(t.id); }} style={{ color: 'hsl(var(--destructive))', zIndex: 10 }}>
+                                            <Trash2 size={16} />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </Link>
                     ))}
                 </div>
             )}

@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
     db.close()
     print("Shutting down...")
 
-from app.api import auth, jobs, sse, templates
+from app.api import auth, jobs, sse, templates, utils
 
 app = FastAPI(
     title="TranscribeLab API",
@@ -40,7 +40,11 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
+from app.api import admin
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(templates.router, prefix="/templates", tags=["templates"])
+
+app.include_router(utils.router, prefix="/utils", tags=["utils"])
 app.include_router(sse.router, tags=["sse"])
 
 

@@ -20,7 +20,7 @@ class JobConfig(BaseModel):
     condition_on_previous_text: bool = False
 
 class JobBase(BaseModel):
-    job_name: str
+    job_name: Optional[str] = None
     meeting_type: str = "General Meeting"
     language: str = "en"
     
@@ -29,6 +29,11 @@ class JobCreate(JobBase):
 
 class JobInDB(JobBase):
     user_id: str
+    filename: Optional[str] = None
+    original_filename: Optional[str] = None
+    content_type: Optional[str] = None
+    size: Optional[int] = None
+    num_speakers: Optional[int] = None
     status: Optional[JobStatus] = JobStatus.PENDING
     status_message: Optional[str] = None # Granular progress: "Transcribing", "Aligning", etc.
     progress: Optional[int] = 0 # 0-100 percentage coverage
@@ -38,6 +43,8 @@ class JobInDB(JobBase):
     transcript_text: Optional[str] = None # Stored transcript for alignment (DEPRECATED: Use transcript_file_path if it's a file)
     transcript_file_path: Optional[str] = None # Path to uploaded transcript (HiDock mode)
     config: JobConfig = Field(default_factory=JobConfig)
+    duration: Optional[float] = None
+    summary_encrypted: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None

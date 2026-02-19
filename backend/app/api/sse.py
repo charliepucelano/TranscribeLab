@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from fastapi.responses import StreamingResponse
 
 from app.models.user import User
@@ -12,7 +12,7 @@ from datetime import datetime
 router = APIRouter()
 
 # Duplicate/Custom dependency for Query Param Token
-async def get_current_user_from_token(token: str):
+async def get_current_user_from_token(token: str = Query(...)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

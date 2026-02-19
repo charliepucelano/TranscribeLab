@@ -28,6 +28,8 @@
 - **Rediarize**: One-click re-processing to fix speaker labels if the AI gets them wrong.
 - **Smart Speaker Edit**: Rename speakers across the entire transcript instantly with a modal popup.
 - **Rich Summaries**: Summaries are rendered in beautiful Markdown with tables, lists, and headers.
+- **Context-Aware Summarization**: Manually provide Date, Participants, and Notes to guide the AI, ensuring accurate metadata even if not spoken.
+- **Dynamic AI Interface**: Smart UI that expands the summary view for better readability and collapses context inputs to reduce clutter.
 - **Real-time Progress**: Live progress bars ("Diarizing... 67%") powered by Server-Sent Events (SSE).
 
 ---
@@ -101,6 +103,22 @@ Open your browser to [http://localhost:3002](http://localhost:3002).
     - Open the job to see the transcript.
     - Click the **Wand Icon** 🪄 to generate an AI summary.
     - Switch languages if needed (EN/ES supported).
+
+### 👥 User Management (Admin)
+TranscribeLab includes a robust **Admin Dashboard** (`/admin`) for managing the platform.
+1.  **Dashboard**: View all users and recent system activity.
+2.  **Manage Users**:
+    - **Delete**: Remove users and wipe their encrypted data from the disk.
+    - **Reset Password**: Admins can reset a user's password. A **Secure Generator** is included to create strong temporary passwords.
+    - **Force Password Change**: Users with reset passwords are forced to set a new private password upon next login.
+
+### 🔑 Account Security
+- **Username Login**: Register and login with a simple username.
+- **Recovery Key**:
+  - Displayed **once** upon registration.
+  - Can be viewed in **Settings > Security** (requires current password).
+  - **Crucial**: If you forget your password, your data is lost *unless* you have this key.
+
 
 ---
 
