@@ -2,7 +2,7 @@ import requests
 
 job_id = "6983c61354698ebd5320af00"
 url = f"http://localhost:8000/jobs/{job_id}/transcript"
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGV5dXJ6YWl6QGdtYWlsLmNvbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc"
+token = "vbSIsImV4cCI6MTc3MDc2NzA4OH0.Y8Ec-iRX2DUbVOMqBV-eWfw-FfI5lvwEFSHb_bkN_sc" #Enter valid token here
 
 headers = {
     "Authorization": f"Bearer {token}"
